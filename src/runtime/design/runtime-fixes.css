@@ -7,9 +7,10 @@
   display: none !important;
 }
 
-/* Orders keeps the lifecycle strip but removes the four benchmark cards below it.
-   Hide the benchmark grids immediately; the DOM guard then prunes them entirely. */
-#lander-full-review [data-page="orders"] .bp-order-benchmark > .bp-benchmark-grid {
+/* Orders benchmark content was explicitly removed from the product, including
+   the Booked → Settled lifecycle strip. The empty sentinel remains only to stop
+   the immutable benchmark retry from recreating that surface. */
+#lander-full-review [data-page="orders"] .bp-order-benchmark {
   display: none !important;
 }
 
