@@ -1,0 +1,22 @@
+:root[data-brokerpad-runtime] :focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+:root[data-brokerpad-runtime] button,
+:root[data-brokerpad-runtime] input,
+:root[data-brokerpad-runtime] select,
+:root[data-brokerpad-runtime] textarea {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-brokerpad-runtime] *,
+  :root[data-brokerpad-runtime] *::before,
+  :root[data-brokerpad-runtime] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
