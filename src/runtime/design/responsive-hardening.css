@@ -37,6 +37,13 @@
   white-space: nowrap;
 }
 
+/* The verified legacy Quotes table already owns its Actions column. The
+   runtime marker can exist during progressive enhancement, but must never
+   contribute a second visual column when the legacy header is already there. */
+#lander-full-review [data-page="quotes"] th[data-bp-quote-actions-head]:last-child:nth-child(9) {
+  display: none !important;
+}
+
 @media (max-width: 1280px) {
   /* Page-level search/filter controls remain available. Hiding the global
      search here prevents injected Quote Calculator actions from widening the
@@ -57,15 +64,15 @@
   #lander-full-review .page,
   #lander-full-review [data-page="crm"],
   #lander-full-review [data-page="crm"] > .card,
-  #lander-full-review [data-page="crm"] .crm-panel {
+  #lander-full-review [data-page="crm"] .crm-panel,
+  #lander-full-review [data-page="quotes"] {
     min-width: 0 !important;
     max-width: 100% !important;
   }
 
-  /* A late legacy CRM rule intentionally sets overflow:visible!important so
-     row action menus can escape the table. On narrow screens that makes the
-     720px semantic table widen the entire document. The scroll container must
-     own that width instead. */
+  /* Late legacy rules use overflow:visible!important on CRM and Quotes table
+     wrappers. On narrow screens that lets their semantic 720/760px tables
+     widen the entire document. The wrapper must own horizontal scrolling. */
   #lander-full-review [data-page="crm"] .tablewrap {
     width: auto !important;
     min-width: 0 !important;
@@ -73,6 +80,16 @@
     overflow-x: auto !important;
     overflow-y: auto !important;
     overscroll-behavior-x: contain;
+  }
+
+  #lander-full-review [data-page="quotes"] .quotes-tablewrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   #lander-full-review [data-page="crm"] > .card {
