@@ -1,0 +1,287 @@
+/* Cards and KPI */
+#lander-full-review .card,
+#lander-full-review .bp-card,
+#lander-full-review .stripe-card,
+#lander-full-review .ci-search-card,
+#lander-full-review .ci-score-card,
+#lander-full-review .finance-summary-card,
+#lander-full-review .comm-contact-card,
+#lander-full-review .comm-widget-card,
+#lander-full-review .qc-actions-card,
+#lander-full-review .qc-estimate-card,
+#lander-full-review .qc-quote-form-card,
+#lander-full-review .qc-result-card {
+  border: 1px solid var(--bp-border) !important;
+  border-radius: var(--bp-radius-md) !important;
+  background: var(--bp-surface) !important;
+  box-shadow: var(--bp-shadow-sm);
+  overflow: hidden;
+}
+
+#lander-full-review .cardh,
+#lander-full-review .bp-card-head,
+#lander-full-review .stripe-card-head {
+  min-height: 42px !important;
+  padding: 0 var(--bp-space-3) !important;
+  gap: var(--bp-space-2) !important;
+  border-bottom: 1px solid var(--bp-border) !important;
+  background: var(--bp-surface-subtle) !important;
+}
+
+#lander-full-review .cardb,
+#lander-full-review .bp-card-body,
+#lander-full-review .stripe-card-body {
+  padding: var(--bp-space-3) !important;
+}
+
+#lander-full-review .kpis,
+#lander-full-review .reports-kpis,
+#lander-full-review .finance-kpis,
+#lander-full-review .orders-status-kpis,
+#lander-full-review .carrier-compliance-kpis,
+#lander-full-review .ci-kpis,
+#lander-full-review .ci-detail-kpis,
+#lander-full-review .lb-kpis,
+#lander-full-review .taq-kpis,
+#lander-full-review .bp-metrics {
+  gap: var(--bp-space-2) !important;
+  margin-bottom: var(--bp-space-3) !important;
+}
+
+#lander-full-review .kpi,
+#lander-full-review .reports-kpi,
+#lander-full-review .bp-metric {
+  min-width: 0;
+  min-height: 82px;
+  padding: 11px 12px !important;
+  border: 1px solid var(--bp-border) !important;
+  border-radius: var(--bp-radius-sm) !important;
+  background: var(--bp-surface) !important;
+  box-shadow: var(--bp-shadow-sm);
+}
+
+#lander-full-review .kpi small,
+#lander-full-review .reports-kpi small,
+#lander-full-review .bp-metric small,
+#lander-full-review .detail label,
+#lander-full-review .bp-detail small {
+  color: var(--bp-text-muted) !important;
+  font-size: var(--bp-text-2xs) !important;
+  font-weight: 800 !important;
+  line-height: var(--bp-leading-tight) !important;
+  letter-spacing: .045em !important;
+}
+
+#lander-full-review .kpi strong,
+#lander-full-review .reports-kpi strong,
+#lander-full-review .bp-metric b {
+  margin-top: var(--bp-space-1) !important;
+  color: var(--bp-text) !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.02em;
+}
+
+#lander-full-review .kpi span,
+#lander-full-review .reports-kpi span,
+#lander-full-review .bp-metric span {
+  margin-top: var(--bp-space-1) !important;
+  color: var(--bp-text-secondary) !important;
+  font-size: var(--bp-text-xs) !important;
+  line-height: var(--bp-leading-normal) !important;
+}
+
+/* Tables */
+#lander-full-review .tablewrap,
+#lander-full-review .reports-tablewrap,
+#lander-full-review .quotes-tablewrap,
+#lander-full-review .carrier-table-wrap,
+#lander-full-review .carrier-compliance-table-wrap,
+#lander-full-review .finance-table-wrap,
+#lander-full-review .stripe-table-wrap,
+#lander-full-review .ci-table-wrap,
+#lander-full-review .bp-tablewrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto !important;
+  overflow-y: visible;
+  border: 1px solid var(--bp-border) !important;
+  border-radius: var(--bp-radius-sm) !important;
+  background: var(--bp-surface) !important;
+  box-shadow: var(--bp-shadow-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+#lander-full-review table,
+#lander-full-review .carrier-table,
+#lander-full-review .finance-table,
+#lander-full-review .ci-table,
+#lander-full-review .bp-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: var(--bp-text-strong);
+}
+
+#lander-full-review th {
+  height: 34px !important;
+  padding: 0 10px !important;
+  border-bottom: 1px solid var(--bp-border) !important;
+  background: var(--bp-surface-muted) !important;
+  color: #596273 !important;
+  font-size: var(--bp-text-2xs) !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: .04em !important;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#lander-full-review td {
+  min-height: 42px;
+  padding: 9px 10px !important;
+  border-bottom: 1px solid #eef0f2 !important;
+  color: var(--bp-text-strong);
+  font-size: var(--bp-text-sm) !important;
+  line-height: var(--bp-leading-normal) !important;
+  vertical-align: middle;
+}
+
+#lander-full-review tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+
+#lander-full-review tbody tr:hover td {
+  background: #fcfcfd;
+}
+
+#lander-full-review .link {
+  color: var(--bp-text) !important;
+  font-size: inherit;
+  font-weight: 700 !important;
+}
+
+/* Badges and semantic states */
+#lander-full-review .badge,
+#lander-full-review .bp-chip,
+#lander-full-review .carrier-compliance-status,
+#lander-full-review .ci-pill,
+#lander-full-review .report-capability {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px !important;
+  padding: 0 7px !important;
+  border: 1px solid var(--bp-border-strong) !important;
+  border-radius: var(--bp-radius-xs) !important;
+  font-size: var(--bp-text-2xs) !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+}
+
+#lander-full-review .green,
+#lander-full-review .badge.green,
+#lander-full-review .compliant,
+#lander-full-review .verified,
+#lander-full-review .approved,
+#lander-full-review .valid {
+  border-color: var(--bp-success-border) !important;
+  background: var(--bp-success-bg) !important;
+  color: var(--bp-success) !important;
+}
+
+#lander-full-review .amber,
+#lander-full-review .badge.amber,
+#lander-full-review .pending,
+#lander-full-review .expiring,
+#lander-full-review .review-required {
+  border-color: var(--bp-warning-border) !important;
+  background: var(--bp-warning-bg) !important;
+  color: var(--bp-warning) !important;
+}
+
+#lander-full-review .red,
+#lander-full-review .badge.red,
+#lander-full-review .blocked,
+#lander-full-review .failed,
+#lander-full-review .expired,
+#lander-full-review .high {
+  border-color: var(--bp-danger-border) !important;
+  background: var(--bp-danger-bg) !important;
+  color: var(--bp-danger) !important;
+}
+
+#lander-full-review .blue,
+#lander-full-review .badge.blue {
+  border-color: var(--bp-info-border) !important;
+  background: var(--bp-info-bg) !important;
+  color: var(--bp-info) !important;
+}
+
+/* Tabs */
+#lander-full-review .crm-tab,
+#lander-full-review .crm-view-tab,
+#lander-full-review .carrier-form-tab,
+#lander-full-review .carrier-module-tab,
+#lander-full-review .ci-detail-tab,
+#lander-full-review .orders-status-tab,
+#lander-full-review .qc-module-tab,
+#lander-full-review .lb-tab,
+#lander-full-review .taq-tabs button,
+#lander-full-review .finance-tabs button,
+#lander-full-review [role="tab"] {
+  min-height: 32px !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--bp-radius-sm) !important;
+  padding: 0 10px !important;
+  background: transparent !important;
+  color: #475467 !important;
+  font-size: var(--bp-text-xs) !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+}
+
+#lander-full-review .crm-tab:hover,
+#lander-full-review .crm-view-tab:hover,
+#lander-full-review .carrier-module-tab:hover,
+#lander-full-review .ci-detail-tab:hover,
+#lander-full-review .orders-status-tab:hover,
+#lander-full-review .qc-module-tab:hover,
+#lander-full-review [role="tab"]:hover {
+  background: var(--bp-surface-hover) !important;
+}
+
+#lander-full-review .crm-tab.active,
+#lander-full-review .crm-view-tab.active,
+#lander-full-review .carrier-form-tab.active,
+#lander-full-review .carrier-module-tab.active,
+#lander-full-review .ci-detail-tab.active,
+#lander-full-review .orders-status-tab.active,
+#lander-full-review .qc-module-tab.active,
+#lander-full-review .lb-tab.active,
+#lander-full-review [role="tab"][aria-selected="true"] {
+  border-color: var(--bp-accent) !important;
+  background: var(--bp-accent) !important;
+  color: #fff !important;
+}
+
+#lander-full-review .crm-tabsbar,
+#lander-full-review .crm-view-tabs,
+#lander-full-review .carrier-form-tabs,
+#lander-full-review .carrier-module-tabs,
+#lander-full-review .ci-detail-tabs,
+#lander-full-review .orders-status-tabs,
+#lander-full-review .qc-module-tabs,
+#lander-full-review .lb-tabs {
+  gap: var(--bp-space-1) !important;
+  padding: var(--bp-space-1) !important;
+  border: 1px solid var(--bp-border) !important;
+  border-radius: var(--bp-radius-sm) !important;
+  background: var(--bp-surface) !important;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
