@@ -14,6 +14,7 @@ DIST = ROOT / 'dist'
 ARCHIVE_SHA256 = '72f9a60244b43940fdc89462c4f011d0ffbd961d47e1cfe10f41c089e15d0ea6'
 BASELINE_INDEX_SHA256 = '4f32fe3717b3d7128cddc4f52368e667c8cfe2fcf093173ab61fee47fc1691f6'
 BASELINE_INDEX = 'brokerpad-benchmark-consolidated/index.html'
+JSZIP_CDN = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
 RUNTIME_MODULES = [
     'app.js',
     'modules/customers.js',
@@ -65,6 +66,7 @@ def document_for(fragment: str) -> str:
         '  <meta name="color-scheme" content="light">\n'
         '  <title>BrokerPad</title>\n'
         f'  {styles}\n'
+        f'  <script src="{JSZIP_CDN}"></script>\n'
         '</head>\n'
         '<body>\n'
         f'{fragment}\n'
@@ -102,7 +104,7 @@ def build() -> None:
 
     print(f'Built BrokerPad static site: {DIST}')
     print(f'Baseline SHA-256: {digest}')
-    print('Document shell: PASS (charset + viewport + runtime assets)')
+    print('Document shell: PASS (charset + viewport + JSZip + runtime assets)')
     print(f'Runtime modules: {len(RUNTIME_MODULES)}')
 
 
