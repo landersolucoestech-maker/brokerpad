@@ -10,53 +10,18 @@
   }[char]));
 
   const initialCustomers = [
-    {
-      id: 'CUS-1001',
-      name: 'Alex Morgan',
-      kind: 'Individual',
-      email: 'alex@example.com',
-      phone: '(305) 555-0181',
-      source: 'Google Ads',
-      status: 'Active',
-      leads: 3,
-      orders: 2,
-      lifetimeValue: 2540,
-      notes: '',
-      createdAt: '2026-08-26T12:00:00.000Z',
-      updatedAt: '2026-08-26T12:00:00.000Z',
-    },
-    {
-      id: 'CUS-1002',
-      name: 'Sunset Auto Group',
-      kind: 'Business',
-      email: 'ops@sunsetauto.com',
-      phone: '(310) 555-0110',
-      source: 'Referral',
-      status: 'Active',
-      leads: 8,
-      orders: 14,
-      lifetimeValue: 18980,
-      notes: '',
-      createdAt: '2026-08-25T12:00:00.000Z',
-      updatedAt: '2026-08-25T12:00:00.000Z',
-    },
+    { id: 'CUS-1001', name: 'Alex Morgan', kind: 'Individual', email: 'alex@example.com', phone: '(305) 555-0181', source: 'Google Ads', status: 'Active', leads: 3, orders: 2, lifetimeValue: 2540, notes: '', createdAt: '2026-08-26T12:00:00.000Z', updatedAt: '2026-08-26T12:00:00.000Z' },
+    { id: 'CUS-1002', name: 'Sunset Auto Group', kind: 'Business', email: 'ops@sunsetauto.com', phone: '(310) 555-0110', source: 'Referral', status: 'Active', leads: 8, orders: 14, lifetimeValue: 18980, notes: '', createdAt: '2026-08-25T12:00:00.000Z', updatedAt: '2026-08-25T12:00:00.000Z' },
   ];
 
-  const money = (value) => new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number(value) || 0);
-
+  const money = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(value) || 0);
   const relative = (iso) => {
     const timestamp = Date.parse(iso || '');
     if (!Number.isFinite(timestamp)) return '—';
     const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
     if (minutes < 60) return `${minutes || 1}m`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h`;
-    const days = Math.floor(hours / 24);
-    return `${days}d`;
+    return hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
   };
 
   const normalize = (customer) => ({
@@ -85,9 +50,9 @@
     return seeded;
   }
 
-  function save(customers) {
+  function save(customers, source = 'customers') {
     runtime().store.set(SCOPE, customers);
-    runtime().events.emit('customers:changed', { count: customers.length });
+    runtime().events.emit('customers:changed', { count: customers.length, source });
   }
 
   function modalShell() {
@@ -116,10 +81,7 @@
     layer.innerHTML = `
       <div class="bp-runtime-modal" role="dialog" aria-modal="true" aria-labelledby="bpCustomerModalTitle">
         <div class="bp-runtime-modal-head">
-          <div>
-            <h3 id="bpCustomerModalTitle">${creating ? 'New Customer' : 'Edit Customer'}</h3>
-            <p>${creating ? 'Create a canonical customer record.' : escapeHtml(current.id)}</p>
-          </div>
+          <div><h3 id="bpCustomerModalTitle">${creating ? 'New Customer' : 'Edit Customer'}</h3><p>${creating ? 'Create a canonical customer record.' : escapeHtml(current.id)}</p></div>
           <button type="button" class="bp-runtime-close" data-customer-close aria-label="Close">×</button>
         </div>
         <form id="bpCustomerForm" class="bp-runtime-form">
@@ -130,9 +92,9 @@
             <label><span>Phone</span><input name="phone" value="${escapeHtml(current.phone)}"></label>
             <label><span>Source</span><input name="source" value="${escapeHtml(current.source)}"></label>
             <label><span>Status</span><select name="status"><option ${current.status === 'Active' ? 'selected' : ''}>Active</option><option ${current.status === 'Inactive' ? 'selected' : ''}>Inactive</option><option ${current.status === 'Do Not Contact' ? 'selected' : ''}>Do Not Contact</option></select></label>
-            <label><span>Leads</span><input name="leads" type="number" min="0" value="${current.leads}"></label>
-            <label><span>Orders</span><input name="orders" type="number" min="0" value="${current.orders}"></label>
-            <label class="bp-runtime-span-2"><span>Lifetime value</span><input name="lifetimeValue" type="number" min="0" step="0.01" value="${current.lifetimeValue}"></label>
+            <label><span>Leads · calculated</span><input name="leads" type="number" value="${current.leads}" readonly aria-readonly="true" class="bp-derived-field"></label>
+            <label><span>Orders · calculated</span><input name="orders" type="number" value="${current.orders}" readonly aria-readonly="true" class="bp-derived-field"></label>
+            <label class="bp-runtime-span-2"><span>Lifetime value · calculated</span><input name="lifetimeValue" type="number" value="${current.lifetimeValue}" readonly aria-readonly="true" class="bp-derived-field"></label>
             <label class="bp-runtime-span-2"><span>Notes</span><textarea name="notes" rows="4">${escapeHtml(current.notes)}</textarea></label>
           </div>
           <div class="bp-runtime-form-error" id="bpCustomerFormError" hidden></div>
@@ -146,10 +108,6 @@
       </div>`;
 
     layer.querySelectorAll('[data-customer-close]').forEach((button) => button.addEventListener('click', closeModal));
-    layer.addEventListener('click', (event) => {
-      if (event.target === layer) closeModal();
-    }, { once: true });
-
     const form = layer.querySelector('#bpCustomerForm');
     form.addEventListener('submit', (event) => {
       event.preventDefault();
@@ -169,9 +127,9 @@
       onCommit('save', normalize({
         ...current,
         ...values,
-        leads: Number(values.leads),
-        orders: Number(values.orders),
-        lifetimeValue: Number(values.lifetimeValue),
+        leads: current.leads,
+        orders: current.orders,
+        lifetimeValue: current.lifetimeValue,
         createdAt: current.createdAt || now(),
         updatedAt: now(),
       }), creating);
@@ -183,7 +141,6 @@
       onCommit('delete', current, false);
       closeModal();
     });
-
     setTimeout(() => form.elements.name?.focus(), 0);
   }
 
@@ -209,48 +166,36 @@
     }
 
     let customers = ensureSeed();
-
     const render = () => {
       const query = search.value.trim().toLowerCase();
-      const rows = customers.filter((customer) => !query || [
-        customer.id, customer.name, customer.email, customer.phone, customer.kind, customer.source, customer.status,
-      ].join(' ').toLowerCase().includes(query));
-
+      const rows = customers.filter((customer) => !query || [customer.id, customer.name, customer.email, customer.phone, customer.kind, customer.source, customer.status].join(' ').toLowerCase().includes(query));
       tbody.innerHTML = rows.length ? rows.map((customer) => `
         <tr data-customer-id="${escapeHtml(customer.id)}">
           <td><button type="button" class="link" data-customer-edit="${escapeHtml(customer.id)}">${escapeHtml(customer.name)}</button><span class="secondary">${escapeHtml(customer.kind)} · ${escapeHtml(customer.id)}</span></td>
-          <td>${escapeHtml(customer.email || '—')}</td>
-          <td>${escapeHtml(customer.phone || '—')}</td>
-          <td>${customer.leads}</td>
-          <td>${customer.orders}</td>
-          <td>${escapeHtml(money(customer.lifetimeValue))}</td>
-          <td>${escapeHtml(relative(customer.updatedAt))}</td>
+          <td>${escapeHtml(customer.email || '—')}</td><td>${escapeHtml(customer.phone || '—')}</td><td>${customer.leads}</td><td>${customer.orders}</td><td>${escapeHtml(money(customer.lifetimeValue))}</td><td>${escapeHtml(relative(customer.updatedAt))}</td>
           <td><button type="button" class="btn ghost" data-customer-edit="${escapeHtml(customer.id)}">Edit</button></td>
-        </tr>`).join('') : '<tr><td colspan="8" class="secondary" style="padding:18px;text-align:center">No customers match the current search.</td></tr>';
+        </tr>`).join('') : '<tr><td colspan="8" class="secondary bp-empty-cell">No customers match the current search.</td></tr>';
     };
 
     const commit = (action, customer, creating) => {
       if (action === 'delete') {
         customers = customers.filter((item) => item.id !== customer.id);
-        save(customers);
+        save(customers, 'customer.delete');
         api.audit.record('customer.delete', 'customer', customer.id, { name: customer.name });
       } else if (creating) {
         customers.unshift(customer);
-        save(customers);
+        save(customers, 'customer.create');
         api.audit.record('customer.create', 'customer', customer.id, { name: customer.name });
       } else {
         const index = customers.findIndex((item) => item.id === customer.id);
         if (index >= 0) customers[index] = customer;
-        save(customers);
-        api.audit.record('customer.update', 'customer', customer.id, { name: customer.name });
+        save(customers, 'customer.update');
+        api.audit.record('customer.update', 'customer', customer.id, { name: customer.name, status: customer.status });
       }
       render();
     };
 
-    createButton.addEventListener('click', (event) => {
-      event.preventDefault();
-      openEditor(null, commit);
-    });
+    createButton.addEventListener('click', (event) => { event.preventDefault(); openEditor(null, commit); });
     search.addEventListener('input', render);
     tbody.addEventListener('click', (event) => {
       const button = event.target.closest('[data-customer-edit]');
@@ -258,14 +203,15 @@
       const customer = customers.find((item) => item.id === button.dataset.customerEdit);
       if (customer) openEditor(customer, commit);
     });
+    api.events.on('customers:changed', () => {
+      customers = (api.store.get(SCOPE, []) || []).map(normalize);
+      render();
+    });
 
     render();
     api.audit.record('customers.module.ready', 'module', 'customers', { count: customers.length });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', install, { once: true });
-  } else {
-    install();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
+  else install();
 })();
