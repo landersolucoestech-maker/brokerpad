@@ -18,65 +18,56 @@
 
   const initialCarriers = [
     {
-      id: 'CAR-1001',
-      name: 'Northstar Vehicle Transport LLC',
-      usdot: '3948201',
-      mc: 'MC-1284502',
-      authorityStatus: 'Active',
-      insuranceStatus: 'Verified',
-      insuranceExpiresAt: '2027-02-15',
-      risk: 'Low',
-      approval: 'Approved',
-      contactName: 'Dispatch Desk',
-      email: 'dispatch@northstar.example',
-      phone: '(888) 555-0112',
-      lanes: 'CA→FL, CA→TX, AZ→FL',
-      notes: '',
-      createdAt: '2026-08-20T12:00:00.000Z',
-      updatedAt: '2026-08-26T11:00:00.000Z',
+      id: 'CAR-1001', name: 'Northstar Vehicle Transport LLC', usdot: '3948201', mc: 'MC-1284502',
+      authorityStatus: 'Active', insuranceStatus: 'Verified', insuranceExpiresAt: '2027-02-15', risk: 'Low', approval: 'Approved',
+      contactName: 'Dispatch Desk', email: 'dispatch@northstar.example', phone: '(888) 555-0112', lanes: 'CA→FL, CA→TX, AZ→FL', notes: '',
+      createdAt: '2026-08-20T12:00:00.000Z', updatedAt: '2026-08-26T11:00:00.000Z',
     },
     {
-      id: 'CAR-1002',
-      name: 'BlueLine Auto Haul Inc.',
-      usdot: '3821900',
-      mc: 'MC-1205931',
-      authorityStatus: 'Active',
-      insuranceStatus: 'Expires soon',
-      insuranceExpiresAt: '2026-09-07',
-      risk: 'High',
-      approval: 'Manual review',
-      contactName: 'Operations',
-      email: 'ops@blueline.example',
-      phone: '(877) 555-0146',
-      lanes: 'NJ→TX, PA→GA',
-      notes: 'Insurance renewal required before approval.',
-      createdAt: '2026-08-19T12:00:00.000Z',
-      updatedAt: '2026-08-26T10:00:00.000Z',
+      id: 'CAR-1002', name: 'BlueLine Auto Haul Inc.', usdot: '3821900', mc: 'MC-1205931',
+      authorityStatus: 'Active', insuranceStatus: 'Expires soon', insuranceExpiresAt: '2026-09-07', risk: 'High', approval: 'Manual review',
+      contactName: 'Operations', email: 'ops@blueline.example', phone: '(877) 555-0146', lanes: 'NJ→TX, PA→GA', notes: 'Insurance renewal required before approval.',
+      createdAt: '2026-08-19T12:00:00.000Z', updatedAt: '2026-08-26T10:00:00.000Z',
     },
   ];
 
-  const normalize = (carrier) => ({
-    id: carrier.id || uid(),
-    name: String(carrier.name || '').trim(),
-    usdot: String(carrier.usdot || '').replace(/\D/g, ''),
-    mc: String(carrier.mc || '').trim().toUpperCase(),
-    authorityStatus: authorityStatuses.includes(carrier.authorityStatus) ? carrier.authorityStatus : 'Pending',
-    insuranceStatus: insuranceStatuses.includes(carrier.insuranceStatus) ? carrier.insuranceStatus : 'Pending',
-    insuranceExpiresAt: String(carrier.insuranceExpiresAt || ''),
-    risk: risks.includes(carrier.risk) ? carrier.risk : 'Medium',
-    approval: approvals.includes(carrier.approval) ? carrier.approval : 'Pending',
-    contactName: String(carrier.contactName || '').trim(),
-    email: String(carrier.email || '').trim(),
-    phone: String(carrier.phone || '').trim(),
-    lanes: String(carrier.lanes || '').trim(),
-    notes: String(carrier.notes || '').trim(),
-    createdAt: carrier.createdAt || now(),
-    updatedAt: carrier.updatedAt || now(),
-  });
+  function derivedInsuranceStatus(status, expiresAt) {
+    const requested = insuranceStatuses.includes(status) ? status : 'Pending';
+    if (!expiresAt) return requested;
+    const expiry = Date.parse(`${String(expiresAt).slice(0, 10)}T23:59:59Z`);
+    if (!Number.isFinite(expiry)) return requested;
+    const days = Math.ceil((expiry - Date.now()) / 86400000);
+    if (days < 0) return 'Expired';
+    if (days <= 30 && ['Verified', 'Expires soon'].includes(requested)) return 'Expires soon';
+    if (days > 30 && requested === 'Expires soon') return 'Verified';
+    return requested;
+  }
+
+  const normalize = (carrier) => {
+    const insuranceExpiresAt = String(carrier.insuranceExpiresAt || '').slice(0, 10);
+    return {
+      id: carrier.id || uid(),
+      name: String(carrier.name || '').trim(),
+      usdot: String(carrier.usdot || '').replace(/\D/g, ''),
+      mc: String(carrier.mc || '').trim().toUpperCase(),
+      authorityStatus: authorityStatuses.includes(carrier.authorityStatus) ? carrier.authorityStatus : 'Pending',
+      insuranceStatus: derivedInsuranceStatus(carrier.insuranceStatus, insuranceExpiresAt),
+      insuranceExpiresAt,
+      risk: risks.includes(carrier.risk) ? carrier.risk : 'Medium',
+      approval: approvals.includes(carrier.approval) ? carrier.approval : 'Pending',
+      contactName: String(carrier.contactName || '').trim(),
+      email: String(carrier.email || '').trim(),
+      phone: String(carrier.phone || '').trim(),
+      lanes: String(carrier.lanes || '').trim(),
+      notes: String(carrier.notes || '').trim(),
+      createdAt: carrier.createdAt || now(),
+      updatedAt: carrier.updatedAt || now(),
+    };
+  };
 
   const isEligible = (carrier) => (
     carrier.authorityStatus === 'Active' &&
-    carrier.insuranceStatus === 'Verified' &&
+    derivedInsuranceStatus(carrier.insuranceStatus, carrier.insuranceExpiresAt) === 'Verified' &&
     carrier.risk !== 'High' &&
     carrier.approval === 'Approved'
   );
@@ -90,16 +81,22 @@
 
   function ensureSeed() {
     const existing = api.store.get(SCOPE, null);
-    if (Array.isArray(existing)) return existing.map(normalize);
+    if (Array.isArray(existing)) {
+      const normalized = existing.map(normalize);
+      if (JSON.stringify(normalized) !== JSON.stringify(existing)) api.store.set(SCOPE, normalized);
+      return normalized;
+    }
     const seeded = initialCarriers.map(normalize);
     api.store.set(SCOPE, seeded);
     api.audit.record('carriers.seed', 'carrier', '', { count: seeded.length });
     return seeded;
   }
 
-  function save(carriers) {
-    api.store.set(SCOPE, carriers);
-    api.events.emit('carriers:changed', { count: carriers.length });
+  function save(carriers, source = 'carriers') {
+    const normalized = carriers.map(normalize);
+    api.store.set(SCOPE, normalized);
+    api.events.emit('carriers:changed', { count: normalized.length, source });
+    return normalized;
   }
 
   function modalShell() {
@@ -126,9 +123,9 @@
     const layer = modalShell();
     layer.hidden = false;
     layer.innerHTML = `
-      <div class="bp-runtime-modal bp-runtime-modal-wide" role="dialog" aria-modal="true">
+      <div class="bp-runtime-modal bp-runtime-modal-wide" role="dialog" aria-modal="true" aria-labelledby="bpCarrierModalTitle">
         <div class="bp-runtime-modal-head">
-          <div><h3>${creating ? 'Add Carrier' : 'Edit Carrier'}</h3><p>${creating ? 'Create a carrier compliance record.' : escapeHtml(current.id)}</p></div>
+          <div><h3 id="bpCarrierModalTitle">${creating ? 'Add Carrier' : 'Edit Carrier'}</h3><p>${creating ? 'Create a carrier compliance record.' : escapeHtml(current.id)}</p></div>
           <button type="button" class="bp-runtime-close" data-carrier-close aria-label="Close">×</button>
         </div>
         <form id="bpCarrierForm" class="bp-runtime-form">
@@ -163,8 +160,16 @@
       event.preventDefault();
       const values = Object.fromEntries(new FormData(form).entries());
       const error = layer.querySelector('#bpCarrierFormError');
-      if (!String(values.name || '').trim() || !String(values.usdot || '').replace(/\D/g, '')) {
+      const usdot = String(values.usdot || '').replace(/\D/g, '');
+      if (!String(values.name || '').trim() || !usdot) {
         error.textContent = 'Carrier legal name and USDOT are required.';
+        error.hidden = false;
+        return;
+      }
+      const existing = api.store.get(SCOPE, []);
+      const duplicate = Array.isArray(existing) && existing.some((row) => String(row.id) !== String(current.id) && String(row.usdot || '').replace(/\D/g, '') === usdot);
+      if (duplicate) {
+        error.textContent = `USDOT ${usdot} is already registered to another carrier.`;
         error.hidden = false;
         return;
       }
@@ -173,7 +178,13 @@
         error.hidden = false;
         return;
       }
-      const next = normalize({ ...current, ...values, updatedAt: now() });
+      const next = normalize({ ...current, ...values, usdot, updatedAt: now() });
+      if (values.insuranceStatus === 'Verified' && next.insuranceStatus !== 'Verified') {
+        error.textContent = `Insurance cannot remain Verified with the selected expiration date. Effective status: ${next.insuranceStatus}.`;
+        error.hidden = false;
+        form.elements.insuranceStatus.value = next.insuranceStatus;
+        return;
+      }
       onCommit('save', next, creating);
       closeModal();
     });
@@ -218,26 +229,26 @@
           <td><button class="link" type="button" data-carrier-edit="${escapeHtml(carrier.id)}">${escapeHtml(carrier.name)}</button><span class="secondary">${escapeHtml(carrier.id)}${isEligible(carrier) ? ' · Dispatch eligible' : ' · Not dispatch eligible'}</span></td>
           <td>USDOT ${escapeHtml(carrier.usdot || '—')}<span class="secondary">${escapeHtml(carrier.mc || 'No MC')}</span></td>
           <td><span class="badge ${badgeClass(carrier.authorityStatus)}">${escapeHtml(carrier.authorityStatus)}</span></td>
-          <td><span class="badge ${badgeClass(carrier.insuranceStatus)}">${escapeHtml(carrier.insuranceStatus)}</span></td>
+          <td><span class="badge ${badgeClass(carrier.insuranceStatus)}">${escapeHtml(carrier.insuranceStatus)}</span><span class="secondary">${escapeHtml(carrier.insuranceExpiresAt || 'No expiration date')}</span></td>
           <td><span class="badge ${badgeClass(carrier.risk)}">${escapeHtml(carrier.risk)}</span></td>
           <td><span class="badge ${badgeClass(carrier.approval)}">${escapeHtml(carrier.approval)}</span></td>
           <td><button class="btn ghost" type="button" data-carrier-edit="${escapeHtml(carrier.id)}">Edit</button></td>
-        </tr>`).join('') : '<tr><td colspan="7" class="secondary" style="padding:18px;text-align:center">No carriers match the current search.</td></tr>';
+        </tr>`).join('') : '<tr><td colspan="7" class="secondary bp-empty-cell">No carriers match the current search.</td></tr>';
     };
 
     const commit = (action, carrier, creating) => {
       if (action === 'delete') {
         carriers = carriers.filter((item) => item.id !== carrier.id);
-        save(carriers);
+        carriers = save(carriers, 'carrier.delete');
         api.audit.record('carrier.delete', 'carrier', carrier.id, { name: carrier.name });
       } else if (creating) {
         carriers.unshift(carrier);
-        save(carriers);
+        carriers = save(carriers, 'carrier.create');
         api.audit.record('carrier.create', 'carrier', carrier.id, { usdot: carrier.usdot, approval: carrier.approval });
       } else {
         const index = carriers.findIndex((item) => item.id === carrier.id);
         if (index >= 0) carriers[index] = carrier;
-        save(carriers);
+        carriers = save(carriers, 'carrier.update');
         api.audit.record('carrier.update', 'carrier', carrier.id, {
           authorityStatus: carrier.authorityStatus,
           insuranceStatus: carrier.insuranceStatus,
@@ -261,7 +272,7 @@
       if (carrier) openEditor(carrier, commit);
     });
     api.events.on('carriers:changed', () => {
-      carriers = api.store.get(SCOPE, []).map(normalize);
+      carriers = (api.store.get(SCOPE, []) || []).map(normalize);
       render();
     });
 
