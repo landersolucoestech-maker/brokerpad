@@ -1,0 +1,97 @@
+/* Final responsive hardening for legacy rules with higher specificity.
+   Keep this file last in the canonical design-system import order. */
+
+/* The global topbar must be allowed to shrink even when page-specific actions
+   are injected at runtime (notably Quote Calculator). */
+#lander-full-review .topbar {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+#lander-full-review .crumb {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+
+#lander-full-review .right {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: calc(100% - 96px) !important;
+}
+
+#lander-full-review .right > * {
+  min-width: 0;
+}
+
+#lander-full-review .bp-top-search {
+  min-width: 0 !important;
+  width: clamp(150px, 18vw, 260px) !important;
+  max-width: 260px !important;
+  flex: 1 1 200px !important;
+}
+
+#lander-full-review #qcHeaderSaveDraft,
+#lander-full-review #qcHeaderPricing,
+#lander-full-review #qcHeaderCalculate {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 1280px) {
+  /* Page-level search/filter controls remain available. Hiding the global
+     search here prevents injected Quote Calculator actions from widening the
+     document on common notebook widths. */
+  #lander-full-review .bp-top-search {
+    display: none !important;
+  }
+
+  #lander-full-review .right {
+    max-width: calc(100% - 72px) !important;
+  }
+}
+
+@media (max-width: 800px) {
+  #lander-full-review .content,
+  #lander-full-review main,
+  #lander-full-review main#pages,
+  #lander-full-review .page,
+  #lander-full-review [data-page="crm"],
+  #lander-full-review [data-page="crm"] > .card,
+  #lander-full-review [data-page="crm"] .crm-panel {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* A late legacy CRM rule intentionally sets overflow:visible!important so
+     row action menus can escape the table. On narrow screens that makes the
+     720px semantic table widen the entire document. The scroll container must
+     own that width instead. */
+  #lander-full-review [data-page="crm"] .tablewrap {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: calc(100% - 20px) !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    overscroll-behavior-x: contain;
+  }
+
+  #lander-full-review [data-page="crm"] > .card {
+    overflow: hidden !important;
+  }
+
+  #lander-full-review [data-page="crm"] .crm-actions-cell {
+    position: relative;
+  }
+
+  /* The same actions already exist in the Quote Calculator page header; on
+     tablet/mobile they do not belong in the constrained global topbar. */
+  #lander-full-review #qcHeaderSaveDraft,
+  #lander-full-review #qcHeaderPricing,
+  #lander-full-review #qcHeaderCalculate {
+    display: none !important;
+  }
+
+  #lander-full-review .right {
+    max-width: calc(100% - 44px) !important;
+  }
+}
