@@ -109,11 +109,17 @@
     if (reconciling) return;
     reconciling = true;
     try {
-      const carriers = Array.isArray(api.store.get('carriers', [])) ? api.store.get('carriers', []) : [];
-      const orders = Array.isArray(api.store.get('orders', [])) ? api.store.get('orders', []) : [];
-      const quotes = Array.isArray(api.store.get('quotes', [])) ? api.store.get('quotes', []) : [];
+      const carrierRows = api.store.get('carriers', []);
+      const orderRows = api.store.get('orders', []);
+      const quoteRows = api.store.get('quotes', []);
+      const leadRows = api.store.get('leads', []);
+      const carriers = Array.isArray(carrierRows) ? carrierRows : [];
+      const orders = Array.isArray(orderRows) ? orderRows : [];
+      const quotes = Array.isArray(quoteRows) ? quoteRows : [];
+      const leads = Array.isArray(leadRows) ? leadRows : [];
       let orderChanges = 0;
       let quoteChanges = 0;
+      let leadChanges = 0;
 
       orders.forEach((order) => {
         if (!order.carrierId && order.carrierName) {
@@ -126,11 +132,26 @@
             orderChanges += 1;
           }
         }
-        if (order.sourceQuoteId) {
-          const quote = quotes.find((item) => item.id === order.sourceQuoteId);
-          if (quote && !quote.orderId) {
-            quote.orderId = order.id;
-            quoteChanges += 1;
+        if (!order.sourceQuoteId) return;
+        const quote = quotes.find((item) => item.id === order.sourceQuoteId);
+        if (!quote) return;
+        if (!quote.orderId) {
+          quote.orderId = order.id;
+          quoteChanges += 1;
+        }
+        if (['Draft', 'Sent', 'Viewed'].includes(quote.status)) {
+          quote.status = 'Accepted';
+          quote.acceptedAt = quote.acceptedAt || order.createdAt || now();
+          quote.updatedAt = now();
+          quoteChanges += 1;
+          if (quote.leadId) {
+            const lead = leads.find((item) => item.id === quote.leadId);
+            if (lead && lead.status !== 'Won') {
+              lead.status = 'Won';
+              lead.quoteAmount = Math.max(0, Number(quote.customerPrice) || 0);
+              lead.updatedAt = now();
+              leadChanges += 1;
+            }
           }
         }
       });
@@ -160,8 +181,12 @@
         api.store.set('quotes', quotes);
         api.events.emit('quotes:changed', { count: quotes.length, source: 'integrity.reconcile' });
       }
-      if (orderChanges || quoteChanges) {
-        api.audit.record('integrity.legacy.links.reconciled', 'integrity', '', { orderChanges, quoteChanges });
+      if (leadChanges) {
+        api.store.set('leads', leads);
+        api.events.emit('leads:changed', { count: leads.length, source: 'integrity.reconcile' });
+      }
+      if (orderChanges || quoteChanges || leadChanges) {
+        api.audit.record('integrity.legacy.links.reconciled', 'integrity', '', { orderChanges, quoteChanges, leadChanges });
       }
     } finally {
       reconciling = false;
@@ -192,6 +217,7 @@
       if (row.customerId && !customers.has(row.customerId)) broken.push({ type: 'quote.customer', id: row.id, target: row.customerId });
       if (row.orderId && !orders.has(row.orderId)) broken.push({ type: 'quote.order', id: row.id, target: row.orderId });
       if (row.status === 'Accepted' && !row.orderId && !orderRows.some((order) => order.sourceQuoteId === row.id)) broken.push({ type: 'quote.accepted_without_order', id: row.id, target: '' });
+      if (['Rejected', 'Expired'].includes(row.status) && orderRows.some((order) => order.sourceQuoteId === row.id)) broken.push({ type: 'quote.order_status_conflict', id: row.id, target: row.status });
     });
     orderRows.forEach((row) => {
       if (row.sourceQuoteId && !quotes.has(row.sourceQuoteId)) broken.push({ type: 'order.quote', id: row.id, target: row.sourceQuoteId });
