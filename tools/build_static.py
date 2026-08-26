@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import html as html_lib
 import io
 import shutil
 import zipfile
@@ -49,6 +50,30 @@ def read_archive() -> bytes:
     return archive
 
 
+def document_for(fragment: str) -> str:
+    styles = (
+        '<link rel="stylesheet" href="src/runtime/app.css">'
+        '<link rel="stylesheet" href="src/runtime/design-system.css">'
+    )
+    scripts = ''.join(f'<script src="src/runtime/{html_lib.escape(name, quote=True)}"></script>' for name in RUNTIME_MODULES)
+    return (
+        '<!doctype html>\n'
+        '<html lang="en">\n'
+        '<head>\n'
+        '  <meta charset="utf-8">\n'
+        '  <meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        '  <meta name="color-scheme" content="light">\n'
+        '  <title>BrokerPad</title>\n'
+        f'  {styles}\n'
+        '</head>\n'
+        '<body>\n'
+        f'{fragment}\n'
+        f'{scripts}\n'
+        '</body>\n'
+        '</html>\n'
+    )
+
+
 def build() -> None:
     archive = read_archive()
     with zipfile.ZipFile(io.BytesIO(archive)) as zf:
@@ -60,26 +85,24 @@ def build() -> None:
     if digest != BASELINE_INDEX_SHA256:
         raise SystemExit(f'Baseline index checksum mismatch: {digest}')
 
-    html = baseline.decode('utf-8')
-    styles = (
-        '<link rel="stylesheet" href="src/runtime/app.css">'
-        '<link rel="stylesheet" href="src/runtime/design-system.css">'
-    )
-    scripts = ''.join(f'<script src="src/runtime/{name}"></script>' for name in RUNTIME_MODULES)
-    if '</head>' not in html or '</body>' not in html:
-        raise SystemExit('Baseline HTML is missing closing head/body tags')
-    html = html.replace('</head>', f'{styles}</head>', 1)
-    html = html.replace('</body>', f'{scripts}</body>', 1)
+    fragment = baseline.decode('utf-8')
+    if '<div id="lander-full-review"' not in fragment:
+        raise SystemExit('Verified baseline root was not found.')
+    if fragment.lstrip().lower().startswith('<!doctype') or '<html' in fragment[:500].lower():
+        raise SystemExit('Expected the verified BrokerPad source to be an HTML fragment, not a full document.')
+
+    rendered = document_for(fragment)
 
     if DIST.exists():
         shutil.rmtree(DIST)
     (DIST / 'src').mkdir(parents=True)
     shutil.copytree(ROOT / 'src' / 'runtime', DIST / 'src' / 'runtime')
-    (DIST / 'index.html').write_text(html, encoding='utf-8')
+    (DIST / 'index.html').write_text(rendered, encoding='utf-8')
     (DIST / '.nojekyll').write_text('', encoding='utf-8')
 
     print(f'Built BrokerPad static site: {DIST}')
     print(f'Baseline SHA-256: {digest}')
+    print('Document shell: PASS (charset + viewport + runtime assets)')
     print(f'Runtime modules: {len(RUNTIME_MODULES)}')
 
 
