@@ -20,8 +20,13 @@
     const zone = page.querySelector('.bp-order-benchmark');
     if (!zone) return;
 
-    zone.querySelectorAll(':scope > .bp-benchmark-grid').forEach((grid) => grid.remove());
-    page.dataset.bpOrderBenchmarkCardsPruned = '1';
+    // Keep an empty sentinel with the legacy class so the immutable benchmark
+    // installOrders() retry sees the owner as already installed and cannot
+    // recreate the removed lifecycle/cards. Nothing inside this sentinel is UI.
+    if (zone.childNodes.length) zone.replaceChildren();
+    zone.classList.add('bp-runtime-order-benchmark-blocker');
+    zone.setAttribute('aria-hidden', 'true');
+    page.dataset.bpOrderBenchmarkPruned = '1';
   }
 
   function pruneAll() {
