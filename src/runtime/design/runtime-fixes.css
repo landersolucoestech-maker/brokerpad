@@ -41,3 +41,102 @@
   color: var(--bp-warning);
   font-size: var(--bp-text-xs);
 }
+
+#lander-full-review .bp-settings-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--bp-space-1);
+  margin-bottom: var(--bp-space-3);
+  padding: var(--bp-space-1);
+  border: 1px solid var(--bp-border);
+  border-radius: var(--bp-radius-sm);
+  background: var(--bp-surface);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+#lander-full-review .bp-settings-tabs button {
+  min-height: 32px;
+  flex: 0 0 auto;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--bp-radius-sm);
+  background: transparent;
+  color: var(--bp-text-secondary);
+  font-size: var(--bp-text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+#lander-full-review .bp-settings-tabs button:hover {
+  background: var(--bp-surface-hover);
+}
+
+#lander-full-review .bp-settings-tabs button.active,
+#lander-full-review .bp-settings-tabs button[aria-selected="true"] {
+  border-color: var(--bp-accent);
+  background: var(--bp-accent);
+  color: #fff;
+}
+
+#lander-full-review .bp-settings-panels,
+#lander-full-review .bp-settings-panels > section,
+#lander-full-review .bp-settings-group {
+  min-width: 0;
+  max-width: 100%;
+}
+
+#lander-full-review .bp-settings-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--bp-space-3);
+  margin-bottom: var(--bp-space-3);
+}
+
+#lander-full-review .bp-settings-section-head h2,
+#lander-full-review .bp-settings-group h3 {
+  margin: 0;
+}
+
+#lander-full-review .bp-settings-section-head p {
+  margin: var(--bp-space-1) 0 0;
+  color: var(--bp-text-secondary);
+  font-size: var(--bp-text-sm);
+}
+
+#lander-full-review .bp-settings-group + .bp-settings-group {
+  margin-top: var(--bp-space-4);
+}
+
+#lander-full-review .bp-settings-group > h3 {
+  margin-bottom: var(--bp-space-2);
+  color: var(--bp-text-secondary);
+  font-size: var(--bp-text-xs);
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+#lander-full-review .bp-settings-group .cardb p {
+  margin: 0 0 var(--bp-space-2);
+  line-height: var(--bp-leading-normal);
+}
+
+@media (max-width: 800px) {
+  #lander-full-review .bp-settings-section-head {
+    flex-direction: column;
+  }
+
+  #lander-full-review .bp-settings-section-head .btn {
+    width: 100%;
+  }
+
+  #lander-full-review [data-page="settings"] .tablewrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+  }
+}
