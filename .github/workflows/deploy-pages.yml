@@ -5,8 +5,6 @@ on:
     branches:
       - dev
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
 
 permissions:
   contents: read
@@ -29,8 +27,22 @@ jobs:
         with:
           ref: dev
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
       - name: Verify approved BrokerPad source
-        run: python3 tools/materialize_source.py --verify-only
+        run: npm run verify:source
+
+      - name: Validate maintained frontend
+        run: npm run lint
+
+      - name: Build verified static site
+        run: npm run build
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -38,7 +50,7 @@ jobs:
       - name: Upload static site artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: .
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment
