@@ -5,6 +5,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+#lander-full-review button:not(:disabled),
+#lander-full-review [role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
 #lander-full-review .btn,
 #lander-full-review .topbtn,
 #lander-full-review .carrier-modal-btn,
@@ -27,7 +32,7 @@
 #lander-full-review .btn:hover:not(:disabled),
 #lander-full-review .topbtn:hover:not(:disabled),
 #lander-full-review .carrier-modal-btn:hover:not(:disabled) {
-  border-color: #aeb6c1 !important;
+  border-color: var(--bp-border-hover) !important;
   background: var(--bp-surface-hover) !important;
 }
 
@@ -42,7 +47,7 @@
 #lander-full-review .btn[data-variant="primary"] {
   border-color: var(--bp-accent) !important;
   background: var(--bp-accent) !important;
-  color: #fff !important;
+  color: var(--bp-on-accent) !important;
 }
 
 #lander-full-review .btn.primary:hover:not(:disabled),
@@ -115,7 +120,7 @@
 #lander-full-review textarea::placeholder,
 .bp-runtime-modal-layer input::placeholder,
 .bp-runtime-modal-layer textarea::placeholder {
-  color: #98a2b3 !important;
+  color: var(--bp-placeholder) !important;
   opacity: 1;
 }
 
@@ -128,6 +133,21 @@
   border-color: var(--bp-accent) !important;
   outline: 0 !important;
   box-shadow: var(--bp-focus) !important;
+}
+
+#lander-full-review input[aria-invalid="true"],
+#lander-full-review select[aria-invalid="true"],
+#lander-full-review textarea[aria-invalid="true"],
+.bp-runtime-modal-layer input[aria-invalid="true"],
+.bp-runtime-modal-layer select[aria-invalid="true"],
+.bp-runtime-modal-layer textarea[aria-invalid="true"] {
+  border-color: var(--bp-danger) !important;
+  background: var(--bp-danger-bg) !important;
+}
+
+#lander-full-review .is-valid,
+.bp-runtime-modal-layer .is-valid {
+  border-color: var(--bp-success-border) !important;
 }
 
 #lander-full-review .quote-preview input,
@@ -155,7 +175,7 @@
 #lander-full-review .bp-runtime-grid label > span,
 .bp-runtime-modal-layer .bp-runtime-grid label > span {
   margin-bottom: var(--bp-space-1) !important;
-  color: #475467 !important;
+  color: var(--bp-text-label) !important;
   font-size: var(--bp-text-xs) !important;
   font-weight: 700 !important;
   line-height: var(--bp-leading-tight) !important;
