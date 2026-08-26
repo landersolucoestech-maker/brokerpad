@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const RUNTIME_VERSION = '0.1.0';
+  const RUNTIME_VERSION = '0.2.0';
   const SCHEMA_VERSION = 1;
   const DEFAULT_TENANT_ID = 'tenant-demo';
   const PREFIX = 'brokerpad:runtime:v1:';
@@ -17,11 +17,45 @@
   };
 
   const now = () => new Date().toISOString();
+  const memoryStorage = new Map();
+
+  const storage = Object.freeze({
+    getItem(key) {
+      try {
+        const value = window.localStorage.getItem(key);
+        if (value != null) return value;
+      } catch (_) {
+        // Browser privacy/storage restrictions fall back to the in-memory store.
+      }
+      return memoryStorage.has(key) ? memoryStorage.get(key) : null;
+    },
+    setItem(key, value) {
+      const serialized = String(value);
+      let persisted = false;
+      try {
+        window.localStorage.setItem(key, serialized);
+        persisted = true;
+      } catch (_) {
+        // Quota/security errors must not make the prototype unusable.
+      }
+      if (!persisted) memoryStorage.set(key, serialized);
+      else memoryStorage.delete(key);
+      return persisted;
+    },
+    removeItem(key) {
+      try {
+        window.localStorage.removeItem(key);
+      } catch (_) {
+        // Ignore and always clear the in-memory fallback.
+      }
+      memoryStorage.delete(key);
+    },
+  });
 
   const runtimeState = {
     version: RUNTIME_VERSION,
     schemaVersion: SCHEMA_VERSION,
-    tenantId: localStorage.getItem(`${PREFIX}tenant`) || DEFAULT_TENANT_ID,
+    tenantId: storage.getItem(`${PREFIX}tenant`) || DEFAULT_TENANT_ID,
     startedAt: now(),
   };
 
@@ -29,19 +63,91 @@
 
   const store = Object.freeze({
     get(scope, fallback = null) {
-      return safeParse(localStorage.getItem(keyFor(scope)), fallback);
+      return safeParse(storage.getItem(keyFor(scope)), fallback);
     },
     set(scope, value) {
-      localStorage.setItem(keyFor(scope), JSON.stringify(value));
+      storage.setItem(keyFor(scope), JSON.stringify(value));
       return value;
     },
     update(scope, updater, fallback = {}) {
       const current = this.get(scope, fallback);
-      const next = updater(structuredClone(current));
+      const clone = typeof structuredClone === 'function'
+        ? structuredClone(current)
+        : safeParse(JSON.stringify(current), current);
+      const next = updater(clone);
       return this.set(scope, next);
     },
     remove(scope) {
-      localStorage.removeItem(keyFor(scope));
+      storage.removeItem(keyFor(scope));
+    },
+  });
+
+  const asArray = (scope) => {
+    const value = store.get(scope, []);
+    return Array.isArray(value) ? value : [];
+  };
+
+  const relationResult = (scope, type, row, label = '') => ({
+    scope,
+    type,
+    id: String(row?.id || ''),
+    label: String(label || row?.name || row?.contactName || row?.customerName || row?.id || type),
+  });
+
+  const relations = Object.freeze({
+    references(entity, entityId) {
+      const id = String(entityId || '').trim();
+      if (!id) return [];
+      const refs = [];
+      const customers = asArray('customers');
+      const leads = asArray('leads');
+      const quotes = asArray('quotes');
+      const orders = asArray('orders');
+      const carriers = asArray('carriers');
+      const documents = asArray('documents');
+      const communications = asArray('communications');
+
+      if (entity === 'customer') {
+        leads.filter((row) => row.customerId === id).forEach((row) => refs.push(relationResult('leads', 'lead', row)));
+        quotes.filter((row) => row.customerId === id).forEach((row) => refs.push(relationResult('quotes', 'quote', row)));
+        orders.filter((row) => row.customerId === id).forEach((row) => refs.push(relationResult('orders', 'order', row)));
+        documents.filter((row) => row.entityType === 'Customer' && row.entityId === id).forEach((row) => refs.push(relationResult('documents', 'document', row)));
+        communications.filter((row) => row.customerId === id).forEach((row) => refs.push(relationResult('communications', 'conversation', row)));
+      } else if (entity === 'lead') {
+        quotes.filter((row) => row.leadId === id).forEach((row) => refs.push(relationResult('quotes', 'quote', row)));
+        orders.filter((row) => row.leadId === id).forEach((row) => refs.push(relationResult('orders', 'order', row)));
+        communications.filter((row) => row.leadId === id).forEach((row) => refs.push(relationResult('communications', 'conversation', row)));
+      } else if (entity === 'quote') {
+        orders.filter((row) => row.sourceQuoteId === id || row.id === quotes.find((quote) => quote.id === id)?.orderId).forEach((row) => refs.push(relationResult('orders', 'order', row)));
+        communications.filter((row) => row.quoteId === id).forEach((row) => refs.push(relationResult('communications', 'conversation', row)));
+      } else if (entity === 'order') {
+        quotes.filter((row) => row.orderId === id).forEach((row) => refs.push(relationResult('quotes', 'quote', row)));
+        documents.filter((row) => row.entityType === 'Order' && row.entityId === id).forEach((row) => refs.push(relationResult('documents', 'document', row)));
+        communications.filter((row) => row.orderId === id).forEach((row) => refs.push(relationResult('communications', 'conversation', row)));
+        const payments = store.get('finance-payments', { customer: {}, carrier: {} }) || {};
+        if (Number(payments.customer?.[id]) > 0 || Number(payments.carrier?.[id]) > 0) {
+          refs.push({ scope: 'finance-payments', type: 'payment ledger', id, label: id });
+        }
+      } else if (entity === 'carrier') {
+        orders.filter((row) => row.carrierId === id).forEach((row) => refs.push(relationResult('orders', 'order', row)));
+        documents.filter((row) => row.entityType === 'Carrier' && row.entityId === id).forEach((row) => refs.push(relationResult('documents', 'document', row)));
+      }
+
+      // Keep the reads above explicit so future domains are added intentionally.
+      void customers;
+      void carriers;
+      return refs;
+    },
+    hasReferences(entity, entityId) {
+      return this.references(entity, entityId).length > 0;
+    },
+    summary(entity, entityId) {
+      const refs = this.references(entity, entityId);
+      const counts = refs.reduce((acc, ref) => {
+        acc[ref.type] = (acc[ref.type] || 0) + 1;
+        return acc;
+      }, {});
+      return Object.entries(counts).map(([type, count]) => `${count} ${type}${count === 1 ? '' : 's'}`).join(', ');
     },
   });
 
@@ -78,13 +184,15 @@
         at: now(),
       };
       const entries = store.get('audit', []);
-      entries.unshift(entry);
-      store.set('audit', entries.slice(0, MAX_AUDIT_EVENTS));
+      const list = Array.isArray(entries) ? entries : [];
+      list.unshift(entry);
+      store.set('audit', list.slice(0, MAX_AUDIT_EVENTS));
       events.emit('audit', entry);
       return entry;
     },
     list() {
-      return store.get('audit', []);
+      const entries = store.get('audit', []);
+      return Array.isArray(entries) ? entries : [];
     },
   });
 
@@ -184,6 +292,7 @@
     events,
     audit,
     settings,
+    relations,
     health,
   });
 
