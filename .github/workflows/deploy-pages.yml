@@ -5,6 +5,8 @@ on:
     branches:
       - dev
   workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
 
 permissions:
   contents: read
@@ -23,7 +25,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout dev
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+        with:
+          ref: dev
 
       - name: Verify approved BrokerPad source
         run: python3 tools/materialize_source.py --verify-only
