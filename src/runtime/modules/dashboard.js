@@ -44,6 +44,44 @@
     return null;
   };
 
+  const removedMetricLabels = new Set([
+    'lead response',
+    'quote → book',
+    'dispatch cycle',
+    'carrier acceptance',
+    'revenue / agent',
+    'follow-up completion',
+  ]);
+
+  const removedCardTitles = new Set([
+    'my work',
+    'acquisition & revenue attribution',
+    'customer experience',
+    'exceptions requiring action',
+  ]);
+
+  function removeLegacyBenchmarkBlocks(page) {
+    page.querySelectorAll('.bp-benchmark-zone .bp-metric').forEach((metric) => {
+      const label = metric.querySelector('small')?.textContent?.trim().toLowerCase() || '';
+      if (removedMetricLabels.has(label)) metric.remove();
+    });
+
+    page.querySelectorAll('.bp-benchmark-zone .bp-card').forEach((card) => {
+      const title = card.querySelector('.bp-card-head h3')?.textContent?.trim().toLowerCase() || '';
+      if (removedCardTitles.has(title)) card.remove();
+    });
+
+    page.querySelectorAll('.bp-benchmark-zone .bp-metrics').forEach((group) => {
+      if (!group.querySelector('.bp-metric')) group.remove();
+    });
+    page.querySelectorAll('.bp-benchmark-zone .bp-benchmark-grid').forEach((grid) => {
+      if (!grid.querySelector('.bp-card')) grid.remove();
+    });
+    page.querySelectorAll('.bp-benchmark-zone').forEach((zone) => {
+      if (!zone.children.length || !zone.textContent.trim()) zone.remove();
+    });
+  }
+
   function dispatchAttention(orders, carriers) {
     const carrierById = new Map(carriers.map((carrier) => [carrier.id, carrier]));
     return orders.filter((order) => {
@@ -104,6 +142,8 @@
     if (!page || page.dataset.bpRuntimeDashboard === '1') return;
     page.dataset.bpRuntimeDashboard = '1';
 
+    removeLegacyBenchmarkBlocks(page);
+
     const kpis = [...page.querySelectorAll('.kpis .kpi')];
     const cards = [...page.querySelectorAll('.grid2 > .card')];
     if (kpis.length < 6 || cards.length < 3) return;
@@ -112,6 +152,8 @@
     if (subtitle) subtitle.textContent = 'Live operational overview derived from the current BrokerPad tenant.';
 
     const render = () => {
+      removeLegacyBenchmarkBlocks(page);
+
       const leads = rows('leads');
       const quotes = rows('quotes');
       const orders = rows('orders');
