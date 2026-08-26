@@ -9,6 +9,7 @@
   const uid = () => `QT-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   const orderUid = () => `OR-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   const statuses = ['Draft', 'Sent', 'Viewed', 'Accepted', 'Expired', 'Rejected'];
+  const earlyOrderStatuses = new Set(['Booked', 'Sourcing']);
 
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -30,11 +31,23 @@
   ];
 
   const normalize = (quote) => ({
-    id: quote.id || uid(), leadId: String(quote.leadId || ''), customerId: String(quote.customerId || ''),
-    contactName: String(quote.contactName || '').trim(), origin: String(quote.origin || '').trim(), destination: String(quote.destination || '').trim(), vehicle: String(quote.vehicle || '').trim(),
-    customerPrice: Math.max(0, Number(quote.customerPrice) || 0), carrierPay: Math.max(0, Number(quote.carrierPay) || 0), revision: Math.max(1, Number(quote.revision) || 1),
-    status: statuses.includes(quote.status) ? quote.status : 'Draft', expiresAt: String(quote.expiresAt || ''), notes: String(quote.notes || '').trim(),
-    createdAt: quote.createdAt || now(), updatedAt: quote.updatedAt || now(), acceptedAt: quote.acceptedAt || '', orderId: quote.orderId || '',
+    id: quote.id || uid(),
+    leadId: String(quote.leadId || ''),
+    customerId: String(quote.customerId || ''),
+    contactName: String(quote.contactName || '').trim(),
+    origin: String(quote.origin || '').trim(),
+    destination: String(quote.destination || '').trim(),
+    vehicle: String(quote.vehicle || '').trim(),
+    customerPrice: Math.max(0, Number(quote.customerPrice) || 0),
+    carrierPay: Math.max(0, Number(quote.carrierPay) || 0),
+    revision: Math.max(1, Number(quote.revision) || 1),
+    status: statuses.includes(quote.status) ? quote.status : 'Draft',
+    expiresAt: String(quote.expiresAt || ''),
+    notes: String(quote.notes || '').trim(),
+    createdAt: quote.createdAt || now(),
+    updatedAt: quote.updatedAt || now(),
+    acceptedAt: quote.acceptedAt || '',
+    orderId: String(quote.orderId || ''),
   });
 
   function ensureSeed() {
@@ -52,10 +65,10 @@
     return Array.isArray(rows) ? rows : [];
   };
 
-  function save(quotes) {
+  function save(quotes, source = 'quotes') {
     const api = runtime();
     api.store.set(SCOPE, quotes);
-    api.events.emit('quotes:changed', { count: quotes.length });
+    api.events.emit('quotes:changed', { count: quotes.length, source });
   }
 
   function syncLead(quote) {
@@ -64,28 +77,73 @@
     const rows = leads();
     const index = rows.findIndex((lead) => lead.id === quote.leadId);
     if (index < 0) return;
-    const desired = quote.status === 'Accepted' ? 'Won' : ['Sent', 'Viewed'].includes(quote.status) ? 'Quoted' : rows[index].status;
-    const next = { ...rows[index], quoteAmount: quote.customerPrice, status: desired, updatedAt: now() };
-    rows[index] = next;
+    const desired = quote.status === 'Accepted'
+      ? 'Won'
+      : ['Sent', 'Viewed'].includes(quote.status)
+        ? 'Quoted'
+        : rows[index].status;
+    rows[index] = { ...rows[index], quoteAmount: quote.customerPrice, status: desired, updatedAt: now() };
     api.store.set(LEAD_SCOPE, rows);
     api.events.emit('leads:changed', { count: rows.length, source: 'quotes' });
   }
 
-  function createOrderFromQuote(quote) {
+  function ensureOrderForQuote(quote) {
     const api = runtime();
-    const orders = api.store.get(ORDER_SCOPE, []);
-    const list = Array.isArray(orders) ? orders : [];
-    const existing = list.find((order) => order.sourceQuoteId === quote.id || order.id === quote.orderId);
-    if (existing) return existing;
+    const stored = api.store.get(ORDER_SCOPE, []);
+    const orders = Array.isArray(stored) ? stored : [];
+    const index = orders.findIndex((order) => order.sourceQuoteId === quote.id || (quote.orderId && order.id === quote.orderId));
+
+    if (index >= 0) {
+      const existing = orders[index];
+      if (earlyOrderStatuses.has(existing.status)) {
+        orders[index] = {
+          ...existing,
+          sourceQuoteId: quote.id,
+          leadId: quote.leadId,
+          customerId: quote.customerId,
+          customerName: quote.contactName,
+          origin: quote.origin,
+          destination: quote.destination,
+          vehicle: quote.vehicle,
+          customerPrice: quote.customerPrice,
+          carrierPay: quote.carrierPay,
+          notes: quote.notes || existing.notes || '',
+          updatedAt: now(),
+        };
+        api.store.set(ORDER_SCOPE, orders);
+        api.events.emit('orders:changed', { count: orders.length, source: 'quote.accepted.sync' });
+        api.audit.record('order.sync.from_quote', 'order', existing.id, { quoteId: quote.id, status: existing.status });
+        return orders[index];
+      }
+      return existing;
+    }
+
     const order = {
-      id: orderUid(), sourceQuoteId: quote.id, leadId: quote.leadId, customerId: quote.customerId, customerName: quote.contactName,
-      origin: quote.origin, destination: quote.destination, vehicle: quote.vehicle, transport: 'Open', status: 'Booked',
-      customerPrice: quote.customerPrice, carrierPay: quote.carrierPay, pickupStart: '', pickupEnd: '', carrierId: '', carrierName: '',
-      createdAt: now(), updatedAt: now(), deliveredAt: '', settledAt: '', notes: quote.notes || '',
+      id: orderUid(),
+      sourceQuoteId: quote.id,
+      leadId: quote.leadId,
+      customerId: quote.customerId,
+      customerName: quote.contactName,
+      origin: quote.origin,
+      destination: quote.destination,
+      vehicle: quote.vehicle,
+      transport: 'Open',
+      status: 'Booked',
+      customerPrice: quote.customerPrice,
+      carrierPay: quote.carrierPay,
+      pickupStart: '',
+      pickupEnd: '',
+      carrierId: '',
+      carrierName: '',
+      createdAt: now(),
+      updatedAt: now(),
+      deliveredAt: '',
+      settledAt: '',
+      notes: quote.notes || '',
     };
-    list.unshift(order);
-    api.store.set(ORDER_SCOPE, list);
-    api.events.emit('orders:changed', { count: list.length, source: 'quote.accepted' });
+    orders.unshift(order);
+    api.store.set(ORDER_SCOPE, orders);
+    api.events.emit('orders:changed', { count: orders.length, source: 'quote.accepted' });
     api.audit.record('order.create.from_quote', 'order', order.id, { quoteId: quote.id, leadId: quote.leadId, customerId: quote.customerId });
     return order;
   }
@@ -93,9 +151,52 @@
   function modalShell() {
     let layer = document.querySelector('#bpQuoteModalLayer');
     if (layer) return layer;
-    layer = document.createElement('div'); layer.id = 'bpQuoteModalLayer'; layer.className = 'bp-runtime-modal-layer'; layer.hidden = true; document.body.appendChild(layer); return layer;
+    layer = document.createElement('div');
+    layer.id = 'bpQuoteModalLayer';
+    layer.className = 'bp-runtime-modal-layer';
+    layer.hidden = true;
+    document.body.appendChild(layer);
+    return layer;
   }
-  function closeModal() { const layer = document.querySelector('#bpQuoteModalLayer'); if (layer) { layer.hidden = true; layer.innerHTML = ''; } }
+
+  function closeModal() {
+    const layer = document.querySelector('#bpQuoteModalLayer');
+    if (!layer) return;
+    layer.hidden = true;
+    layer.innerHTML = '';
+  }
+
+  function quoteFromForm(form, current, leadRows, statusOverride = '') {
+    const values = Object.fromEntries(new FormData(form).entries());
+    const error = form.closest('.bp-runtime-modal')?.querySelector('#bpQuoteFormError');
+    if (
+      !String(values.contactName || '').trim() ||
+      !String(values.origin || '').trim() ||
+      !String(values.destination || '').trim() ||
+      !String(values.vehicle || '').trim() ||
+      Number(values.customerPrice) <= 0
+    ) {
+      if (error) {
+        error.textContent = 'Contact, route, vehicle and a customer price greater than zero are required.';
+        error.hidden = false;
+      }
+      return null;
+    }
+    if (error) error.hidden = true;
+    const lead = leadRows.find((item) => item.id === values.leadId);
+    const status = statusOverride || values.status;
+    return normalize({
+      ...current,
+      ...values,
+      status,
+      customerId: lead?.customerId || current.customerId,
+      customerPrice: Number(values.customerPrice),
+      carrierPay: Number(values.carrierPay),
+      revision: Number(values.revision),
+      acceptedAt: status === 'Accepted' ? (current.acceptedAt || now()) : current.acceptedAt,
+      updatedAt: now(),
+    });
+  }
 
   function openEditor(quote, onCommit) {
     const creating = !quote;
@@ -106,8 +207,8 @@
     const layer = modalShell();
     layer.hidden = false;
     layer.innerHTML = `
-      <div class="bp-runtime-modal bp-runtime-modal-wide" role="dialog" aria-modal="true">
-        <div class="bp-runtime-modal-head"><div><h3>${creating ? 'New Quote' : 'Edit Quote'}</h3><p>${creating ? 'Create a customer quote from a lead or manually.' : escapeHtml(current.id)}</p></div><button type="button" class="bp-runtime-close" data-quote-close>×</button></div>
+      <div class="bp-runtime-modal bp-runtime-modal-wide" role="dialog" aria-modal="true" aria-labelledby="bpQuoteModalTitle">
+        <div class="bp-runtime-modal-head"><div><h3 id="bpQuoteModalTitle">${creating ? 'New Quote' : 'Edit Quote'}</h3><p>${creating ? 'Create a customer quote from a lead or manually.' : escapeHtml(current.id)}</p></div><button type="button" class="bp-runtime-close" data-quote-close aria-label="Close">×</button></div>
         <form id="bpQuoteForm" class="bp-runtime-form">
           <div class="bp-runtime-grid">
             <label><span>Lead</span><select name="leadId"><option value="">Manual quote</option>${leadOptions}</select></label>
@@ -120,7 +221,7 @@
             <label><span>Revision</span><input name="revision" type="number" min="1" value="${current.revision}"></label>
             <label><span>Status</span><select name="status">${statuses.map((status) => `<option ${status === current.status ? 'selected' : ''}>${status}</option>`).join('')}</select></label>
             <label><span>Expires</span><input name="expiresAt" type="date" value="${escapeHtml(current.expiresAt)}"></label>
-            <label><span>Current margin</span><input disabled value="${margin.toFixed(1)}%"></label>
+            <label><span>Current margin</span><input name="marginDisplay" disabled value="${margin.toFixed(1)}%"></label>
             <label class="bp-runtime-span-2"><span>Notes</span><textarea name="notes" rows="4">${escapeHtml(current.notes)}</textarea></label>
           </div>
           <div class="bp-runtime-form-error" id="bpQuoteFormError" hidden></div>
@@ -134,6 +235,13 @@
 
     layer.querySelectorAll('[data-quote-close]').forEach((button) => button.addEventListener('click', closeModal));
     const form = layer.querySelector('#bpQuoteForm');
+    const updateMargin = () => {
+      const price = Number(form.elements.customerPrice.value) || 0;
+      const pay = Number(form.elements.carrierPay.value) || 0;
+      form.elements.marginDisplay.value = price > 0 ? `${((price - pay) / price * 100).toFixed(1)}%` : '0.0%';
+    };
+    form.elements.customerPrice.addEventListener('input', updateMargin);
+    form.elements.carrierPay.addEventListener('input', updateMargin);
     form.elements.leadId.addEventListener('change', () => {
       const lead = leadRows.find((item) => item.id === form.elements.leadId.value);
       if (!lead) return;
@@ -142,24 +250,35 @@
       form.elements.destination.value = lead.destination || '';
       form.elements.vehicle.value = [lead.vehicleYear, lead.vehicleMake, lead.vehicleModel].filter(Boolean).join(' ');
       if (!Number(form.elements.customerPrice.value)) form.elements.customerPrice.value = lead.quoteAmount || 0;
+      updateMargin();
     });
+
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      const values = Object.fromEntries(new FormData(form).entries());
-      const error = layer.querySelector('#bpQuoteFormError');
-      if (!String(values.contactName || '').trim() || !String(values.origin || '').trim() || !String(values.destination || '').trim() || !String(values.vehicle || '').trim() || Number(values.customerPrice) <= 0) {
-        error.textContent = 'Contact, route, vehicle and a customer price greater than zero are required.'; error.hidden = false; return;
+      let next = quoteFromForm(form, current, leadRows);
+      if (!next) return;
+      const accepting = next.status === 'Accepted';
+      if (accepting) {
+        const order = ensureOrderForQuote(next);
+        next = normalize({ ...next, orderId: order.id, acceptedAt: next.acceptedAt || now() });
       }
-      const lead = leadRows.find((item) => item.id === values.leadId);
-      onCommit('save', normalize({ ...current, ...values, customerId: lead?.customerId || current.customerId, customerPrice: Number(values.customerPrice), carrierPay: Number(values.carrierPay), revision: Number(values.revision), updatedAt: now() }), creating);
+      onCommit(accepting ? 'accept' : 'save', next, creating);
       closeModal();
     });
+
     layer.querySelector('[data-quote-delete]')?.addEventListener('click', () => {
-      if (!window.confirm(`Delete ${current.id}?`)) return; onCommit('delete', current, false); closeModal();
+      if (!window.confirm(`Delete ${current.id}?`)) return;
+      onCommit('delete', current, false);
+      closeModal();
     });
+
     layer.querySelector('[data-quote-accept]')?.addEventListener('click', () => {
-      const accepted = normalize({ ...current, status: 'Accepted', acceptedAt: now(), updatedAt: now() });
-      const order = createOrderFromQuote(accepted); accepted.orderId = order.id; onCommit('accept', accepted, false); closeModal();
+      let accepted = quoteFromForm(form, current, leadRows, 'Accepted');
+      if (!accepted) return;
+      const order = ensureOrderForQuote(accepted);
+      accepted = normalize({ ...accepted, orderId: order.id, acceptedAt: accepted.acceptedAt || now() });
+      onCommit('accept', accepted, false);
+      closeModal();
     });
   }
 
@@ -169,29 +288,76 @@
     const page = document.querySelector('[data-page="quotes"]');
     if (!page || page.dataset.bpRuntimeQuotes === '1') return;
     page.dataset.bpRuntimeQuotes = '1';
-    const table = page.querySelector('table'), tbody = table?.querySelector('tbody'), search = page.querySelector('.search-table'), head = page.querySelector('.head');
+    const table = page.querySelector('table');
+    const tbody = table?.querySelector('tbody');
+    const search = page.querySelector('.search-table');
+    const head = page.querySelector('.head');
     if (!table || !tbody || !search || !head) return;
+
     let createButton = head.querySelector('[data-bp-new-quote]');
-    if (!createButton) { createButton = document.createElement('button'); createButton.type = 'button'; createButton.className = 'btn primary'; createButton.dataset.bpNewQuote = '1'; createButton.textContent = '+ New quote'; head.appendChild(createButton); }
+    if (!createButton) {
+      createButton = document.createElement('button');
+      createButton.type = 'button';
+      createButton.className = 'btn primary';
+      createButton.dataset.bpNewQuote = '1';
+      createButton.textContent = '+ New quote';
+      head.appendChild(createButton);
+    }
     const headerRow = table.querySelector('thead tr');
-    if (headerRow && !headerRow.querySelector('[data-bp-quote-actions-head]')) { const th = document.createElement('th'); th.dataset.bpQuoteActionsHead = '1'; th.textContent = 'Actions'; headerRow.appendChild(th); }
+    if (headerRow && !headerRow.querySelector('[data-bp-quote-actions-head]')) {
+      const th = document.createElement('th');
+      th.dataset.bpQuoteActionsHead = '1';
+      th.textContent = 'Actions';
+      headerRow.appendChild(th);
+    }
+
     let quotes = ensureSeed();
     const render = () => {
       const query = search.value.trim().toLowerCase();
       const rows = quotes.filter((quote) => !query || [quote.id, quote.leadId, quote.contactName, quote.origin, quote.destination, quote.vehicle, quote.status].join(' ').toLowerCase().includes(query));
-      tbody.innerHTML = rows.length ? rows.map((quote) => `<tr data-quote-id="${escapeHtml(quote.id)}"><td><button class="link" type="button" data-quote-edit="${escapeHtml(quote.id)}">${escapeHtml(quote.id)} · ${escapeHtml(quote.contactName)}</button><span class="secondary">${escapeHtml(quote.leadId || 'Manual quote')}</span></td><td>${escapeHtml(quote.origin)} → ${escapeHtml(quote.destination)}</td><td>${escapeHtml(quote.vehicle)}</td><td>${escapeHtml(money(quote.customerPrice))}</td><td>Rev ${quote.revision}</td><td><span class="badge ${statusClass(quote.status)}">${escapeHtml(quote.status)}</span></td><td>${escapeHtml(relative(quote.updatedAt))}</td><td><button class="btn ghost" type="button" data-quote-edit="${escapeHtml(quote.id)}">Edit</button></td></tr>`).join('') : '<tr><td colspan="8" class="secondary" style="padding:18px;text-align:center">No quotes match the current search.</td></tr>';
+      tbody.innerHTML = rows.length
+        ? rows.map((quote) => `<tr data-quote-id="${escapeHtml(quote.id)}"><td><button class="link" type="button" data-quote-edit="${escapeHtml(quote.id)}">${escapeHtml(quote.id)} · ${escapeHtml(quote.contactName)}</button><span class="secondary">${escapeHtml(quote.leadId || 'Manual quote')}</span></td><td>${escapeHtml(quote.origin)} → ${escapeHtml(quote.destination)}</td><td>${escapeHtml(quote.vehicle)}</td><td>${escapeHtml(money(quote.customerPrice))}</td><td>Rev ${quote.revision}</td><td><span class="badge ${statusClass(quote.status)}">${escapeHtml(quote.status)}</span></td><td>${escapeHtml(relative(quote.updatedAt))}</td><td><button class="btn ghost" type="button" data-quote-edit="${escapeHtml(quote.id)}">Edit</button></td></tr>`).join('')
+        : '<tr><td colspan="8" class="secondary bp-empty-cell">No quotes match the current search.</td></tr>';
     };
+
     const commit = (action, quote, creating) => {
-      if (action === 'delete') { quotes = quotes.filter((item) => item.id !== quote.id); save(quotes); api.audit.record('quote.delete', 'quote', quote.id); }
-      else if (creating) { quotes.unshift(quote); save(quotes); syncLead(quote); api.audit.record('quote.create', 'quote', quote.id, { leadId: quote.leadId }); }
-      else { const index = quotes.findIndex((item) => item.id === quote.id); if (index >= 0) quotes[index] = quote; save(quotes); syncLead(quote); api.audit.record(action === 'accept' ? 'quote.accept' : 'quote.update', 'quote', quote.id, { status: quote.status, orderId: quote.orderId }); }
+      if (action === 'delete') {
+        quotes = quotes.filter((item) => item.id !== quote.id);
+        save(quotes, 'quote.delete');
+        api.audit.record('quote.delete', 'quote', quote.id);
+      } else if (creating) {
+        quotes.unshift(quote);
+        save(quotes, action === 'accept' ? 'quote.accept' : 'quote.create');
+        syncLead(quote);
+        api.audit.record(action === 'accept' ? 'quote.accept' : 'quote.create', 'quote', quote.id, { leadId: quote.leadId, orderId: quote.orderId });
+      } else {
+        const index = quotes.findIndex((item) => item.id === quote.id);
+        if (index >= 0) quotes[index] = quote;
+        save(quotes, action === 'accept' ? 'quote.accept' : 'quote.update');
+        syncLead(quote);
+        api.audit.record(action === 'accept' ? 'quote.accept' : 'quote.update', 'quote', quote.id, { status: quote.status, orderId: quote.orderId });
+      }
       render();
     };
+
     createButton.addEventListener('click', () => openEditor(null, commit));
     search.addEventListener('input', render);
-    tbody.addEventListener('click', (event) => { const button = event.target.closest('[data-quote-edit]'); if (!button) return; const quote = quotes.find((item) => item.id === button.dataset.quoteEdit); if (quote) openEditor(quote, commit); });
-    render(); api.audit.record('quotes.module.ready', 'module', 'quotes', { count: quotes.length });
+    tbody.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-quote-edit]');
+      if (!button) return;
+      const quote = quotes.find((item) => item.id === button.dataset.quoteEdit);
+      if (quote) openEditor(quote, commit);
+    });
+    api.events.on('quotes:changed', (event) => {
+      if (event.detail?.detail?.source?.startsWith?.('quote.')) return;
+      quotes = (api.store.get(SCOPE, []) || []).map(normalize);
+      render();
+    });
+
+    render();
+    api.audit.record('quotes.module.ready', 'module', 'quotes', { count: quotes.length });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true }); else install();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
+  else install();
 })();
