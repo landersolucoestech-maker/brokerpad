@@ -29,6 +29,7 @@ RUNTIME_MODULES = [
     'modules/documents.js',
     'modules/communications.js',
     'modules/reports.js',
+    'modules/integrity.js',
     'modules/sync.js',
     'modules/audit.js',
     'ui-system.js',
