@@ -1,37 +1,56 @@
 (() => {
   'use strict';
 
-  if (window.__brokerPadDashboardRemovalGuardInstalled) return;
-  window.__brokerPadDashboardRemovalGuardInstalled = true;
+  if (window.__brokerPadBenchmarkRemovalGuardInstalled) return;
+  window.__brokerPadBenchmarkRemovalGuardInstalled = true;
 
   const DASHBOARD_SELECTOR = '[data-page="dashboard"]';
-  const LEGACY_SELECTOR = '.bp-benchmark-zone';
+  const ORDERS_SELECTOR = '[data-page="orders"]';
 
-  function prune() {
+  function pruneDashboard() {
     const page = document.querySelector(DASHBOARD_SELECTOR);
     if (!page) return;
-    page.querySelectorAll(LEGACY_SELECTOR).forEach((node) => node.remove());
+    page.querySelectorAll('.bp-benchmark-zone').forEach((node) => node.remove());
     page.dataset.bpDashboardBenchmarkPruned = '1';
   }
 
-  function install() {
-    const page = document.querySelector(DASHBOARD_SELECTOR);
+  function pruneOrders() {
+    const page = document.querySelector(ORDERS_SELECTOR);
     if (!page) return;
+    const zone = page.querySelector('.bp-order-benchmark');
+    if (!zone) return;
 
-    prune();
-    requestAnimationFrame(prune);
-    queueMicrotask(prune);
-    setTimeout(prune, 0);
-    setTimeout(prune, 50);
+    zone.querySelectorAll(':scope > .bp-benchmark-grid').forEach((grid) => grid.remove());
+    page.dataset.bpOrderBenchmarkCardsPruned = '1';
+  }
 
+  function pruneAll() {
+    pruneDashboard();
+    pruneOrders();
+  }
+
+  function schedulePrune() {
+    pruneAll();
+    requestAnimationFrame(pruneAll);
+    queueMicrotask(pruneAll);
+    setTimeout(pruneAll, 0);
+    setTimeout(pruneAll, 50);
+  }
+
+  function install() {
+    schedulePrune();
+
+    const pages = document.querySelector('#pages') || document.querySelector('#lander-full-review') || document.body;
     const observer = new MutationObserver((mutations) => {
       if (!mutations.some((mutation) => mutation.addedNodes.length)) return;
-      prune();
+      pruneAll();
     });
-    observer.observe(page, { childList: true, subtree: true });
+    observer.observe(pages, { childList: true, subtree: true });
 
     document.addEventListener('click', (event) => {
-      if (event.target.closest('#nav button[data-go="dashboard"]')) setTimeout(prune, 0);
+      if (event.target.closest('#nav button[data-go="dashboard"], #nav button[data-go="orders"]')) {
+        setTimeout(pruneAll, 0);
+      }
     });
   }
 
