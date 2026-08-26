@@ -33,9 +33,41 @@
       const source = zip.file('brokerpad-benchmark-consolidated/index.html');
       if (!source) throw new Error('BrokerPad index.html was not found in the verified source archive.');
       const sourceHtml = await source.async('text');
-      const html = sourceHtml
-        .replace('</head>', '<link rel="stylesheet" href="src/runtime/app.css"><link rel="stylesheet" href="src/runtime/design-system.css"></head>')
-        .replace('</body>', '<script src="src/runtime/app.js"><\/script><script src="src/runtime/modules/customers.js"><\/script><script src="src/runtime/modules/leads.js"><\/script><script src="src/runtime/modules/quotes.js"><\/script><script src="src/runtime/modules/orders.js"><\/script><script src="src/runtime/modules/carriers.js"><\/script><script src="src/runtime/modules/dispatch.js"><\/script><script src="src/runtime/modules/compliance.js"><\/script><script src="src/runtime/modules/finance.js"><\/script><script src="src/runtime/modules/risk.js"><\/script><script src="src/runtime/modules/documents.js"><\/script><script src="src/runtime/modules/communications.js"><\/script><script src="src/runtime/modules/reports.js"><\/script><script src="src/runtime/modules/sync.js"><\/script><script src="src/runtime/modules/audit.js"><\/script><script src="src/runtime/ui-system.js"><\/script></body>');
+      if (!sourceHtml.includes('id="lander-full-review"')) throw new Error('Verified BrokerPad root was not found.');
+
+      const runtimeSources = [
+        'src/runtime/app.js',
+        'src/runtime/modules/customers.js',
+        'src/runtime/modules/leads.js',
+        'src/runtime/modules/quotes.js',
+        'src/runtime/modules/orders.js',
+        'src/runtime/modules/carriers.js',
+        'src/runtime/modules/dispatch.js',
+        'src/runtime/modules/compliance.js',
+        'src/runtime/modules/finance.js',
+        'src/runtime/modules/risk.js',
+        'src/runtime/modules/documents.js',
+        'src/runtime/modules/communications.js',
+        'src/runtime/modules/reports.js',
+        'src/runtime/modules/sync.js',
+        'src/runtime/modules/audit.js',
+        'src/runtime/ui-system.js'
+      ];
+      const runtimeScripts = runtimeSources.map(src => `<script src="${src}"><\/script>`).join('');
+      const html = [
+        '<!doctype html><html lang="en"><head>',
+        '<meta charset="utf-8">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1">',
+        '<meta name="color-scheme" content="light">',
+        '<title>BrokerPad</title>',
+        '<link rel="stylesheet" href="src/runtime/app.css">',
+        '<link rel="stylesheet" href="src/runtime/design-system.css">',
+        '</head><body>',
+        sourceHtml,
+        runtimeScripts,
+        '</body></html>'
+      ].join('');
+
       document.open();
       document.write(html);
       document.close();
