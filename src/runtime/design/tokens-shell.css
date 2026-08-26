@@ -10,6 +10,8 @@
   --bp-text-md: 12px;
   --bp-text-lg: 14px;
   --bp-text-xl: 16px;
+  --bp-text-metric: 20px;
+  --bp-text-page-mobile: 20px;
   --bp-text-2xl: 22px;
   --bp-leading-tight: 1.25;
   --bp-leading-normal: 1.45;
@@ -33,6 +35,18 @@
   --bp-control-sm: 30px;
   --bp-control-md: 34px;
   --bp-control-lg: 38px;
+  --bp-brand-mark-size: 30px;
+  --bp-nav-item-height: 36px;
+  --bp-avatar-size: 34px;
+  --bp-card-head-height: 42px;
+  --bp-kpi-min-height: 82px;
+  --bp-table-head-height: 34px;
+  --bp-table-row-min-height: 42px;
+  --bp-pagination-min-height: 46px;
+  --bp-modal-head-min-height: 54px;
+  --bp-modal-foot-min-height: 56px;
+  --bp-modal-max-width: 760px;
+  --bp-table-mobile-min-width: 720px;
   --bp-topbar-height: 62px;
   --bp-sidebar-width: 235px;
   --bp-content-max: 1550px;
@@ -42,17 +56,28 @@
   --bp-surface-subtle: #fafbfc;
   --bp-surface-muted: #f7f8f9;
   --bp-surface-hover: #f3f5f7;
+  --bp-row-hover: #fcfcfd;
   --bp-sidebar: #111827;
   --bp-sidebar-hover: #243244;
+  --bp-sidebar-border: #273244;
+  --bp-sidebar-scroll: #344054;
+  --bp-sidebar-text: #c9ced7;
+  --bp-sidebar-muted: #8a93a1;
   --bp-text: #111827;
   --bp-text-strong: #1f2937;
+  --bp-text-label: #475467;
+  --bp-text-table-head: #596273;
   --bp-text-secondary: #667085;
   --bp-text-muted: #7b8492;
+  --bp-placeholder: #98a2b3;
   --bp-border: #dfe3e8;
   --bp-border-strong: #cbd1d8;
+  --bp-border-hover: #aeb6c1;
+  --bp-row-border: #eef0f2;
   --bp-accent: #0f6b67;
   --bp-accent-hover: #0c5a56;
   --bp-accent-soft: #eef7f6;
+  --bp-on-accent: #ffffff;
   --bp-success: #22633d;
   --bp-success-bg: #eef7f0;
   --bp-success-border: #cfe5d4;
@@ -65,6 +90,9 @@
   --bp-info: #244a7c;
   --bp-info-bg: #eef4fb;
   --bp-info-border: #cbd9eb;
+  --bp-overlay: rgba(17, 24, 39, .46);
+  --bp-backdrop: rgba(17, 24, 39, .45);
+  --bp-topbar-bg: rgba(255, 255, 255, .98);
 
   --bp-shadow-sm: 0 1px 2px rgba(17, 24, 39, .06);
   --bp-shadow-md: 0 10px 28px rgba(17, 24, 39, .14);
@@ -139,9 +167,9 @@ body {
   overscroll-behavior: contain;
   padding-bottom: var(--bp-space-5);
   background: var(--bp-sidebar) !important;
-  color: #d1d5db;
+  color: var(--bp-sidebar-text);
   scrollbar-width: thin;
-  scrollbar-color: #344054 transparent;
+  scrollbar-color: var(--bp-sidebar-scroll) transparent;
 }
 
 #lander-full-review .brand {
@@ -149,23 +177,23 @@ body {
   min-height: var(--bp-topbar-height);
   padding: 0 var(--bp-space-4) !important;
   gap: var(--bp-space-2) !important;
-  border-bottom: 1px solid #273244 !important;
+  border-bottom: 1px solid var(--bp-sidebar-border) !important;
   font-size: var(--bp-text-lg) !important;
   font-weight: 800 !important;
   letter-spacing: -.01em;
 }
 
 #lander-full-review .mark {
-  width: 30px !important;
-  height: 30px !important;
-  flex: 0 0 30px;
+  width: var(--bp-brand-mark-size) !important;
+  height: var(--bp-brand-mark-size) !important;
+  flex: 0 0 var(--bp-brand-mark-size);
   border-radius: var(--bp-radius-sm) !important;
   background: var(--bp-accent) !important;
 }
 
 #lander-full-review .navtitle {
   padding: var(--bp-space-4) 15px var(--bp-space-2) !important;
-  color: #8a93a1 !important;
+  color: var(--bp-sidebar-muted) !important;
   font-size: var(--bp-text-2xs) !important;
   font-weight: 800 !important;
   letter-spacing: .08em !important;
@@ -178,11 +206,11 @@ body {
 
 #lander-full-review nav button,
 #lander-full-review .accounting-subnav button {
-  min-height: 36px !important;
+  min-height: var(--bp-nav-item-height) !important;
   border-radius: var(--bp-radius-sm) !important;
   padding: 0 10px !important;
   gap: var(--bp-space-2) !important;
-  color: #c9ced7;
+  color: var(--bp-sidebar-text);
   font-size: var(--bp-text-sm) !important;
   font-weight: 500;
   line-height: 1.2;
@@ -193,7 +221,7 @@ body {
 #lander-full-review nav button.active,
 #lander-full-review nav button[aria-current="page"] {
   background: var(--bp-sidebar-hover) !important;
-  color: #fff !important;
+  color: var(--bp-on-accent) !important;
 }
 
 #lander-full-review nav button.active,
@@ -211,7 +239,7 @@ body {
   padding: 0 var(--bp-space-6) !important;
   gap: var(--bp-space-3);
   border-bottom: 1px solid var(--bp-border) !important;
-  background: rgba(255,255,255,.98) !important;
+  background: var(--bp-topbar-bg) !important;
 }
 
 #lander-full-review .crumb {
