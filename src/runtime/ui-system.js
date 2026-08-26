@@ -145,7 +145,7 @@
   }
 
   function enhanceLiveRegions() {
-    $$('.bp-toast,.ci-toast,.report-toast,.bp-runtime-form-error,.finance-form-error,.carrier-form-error,.orders-modal-error').forEach((node) => {
+    $$('.bp-toast,.ci-toast,.report-toast,.bp-runtime-form-error,.finance-form-error,.carrier-form-error,.orders-modal-error,.bp-contact-policy-notice').forEach((node) => {
       if (!node.getAttribute('role')) node.setAttribute('role', 'status');
       node.setAttribute('aria-live', 'polite');
     });
@@ -164,9 +164,69 @@
     '.orders-modal.open .orders-modal-dialog'
   ].join(',');
 
+  const runtimeCloseSelectors = [
+    '[aria-label="Close"]',
+    '[data-bp-modal-close]',
+    '[data-customer-close]',
+    '[data-lead-close]',
+    '[data-quote-close]',
+    '[data-order-close]',
+    '[data-carrier-close]',
+    '[data-dispatch-close]',
+    '[data-document-close]',
+    '[data-comm-close]',
+    '[data-settings-close]',
+    '[data-integrity-close]',
+    '[data-finance-close]',
+    '.crm-modal-close',
+    '.carrier-modal-close',
+    '.finance-modal-close',
+    '.orders-modal-close',
+    '.report-modal-close',
+    '.stripe-modal-close'
+  ].join(',');
+
   function topModal() {
     const nodes = [...document.querySelectorAll(modalSelectors)];
     return nodes[nodes.length - 1] || null;
+  }
+
+  function focusableIn(modal) {
+    return [...modal.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])')]
+      .filter((node) => node.offsetParent !== null);
+  }
+
+  let trackedModal = null;
+  let modalOpener = null;
+
+  function syncModalFocus() {
+    const modal = topModal();
+    if (modal === trackedModal) return;
+
+    if (!modal && trackedModal) {
+      const opener = modalOpener;
+      trackedModal = null;
+      modalOpener = null;
+      if (opener?.isConnected && typeof opener.focus === 'function') requestAnimationFrame(() => opener.focus());
+      return;
+    }
+
+    if (modal) {
+      if (!trackedModal) {
+        const active = document.activeElement;
+        modalOpener = active && active !== document.body && !modal.contains(active) ? active : null;
+      }
+      trackedModal = modal;
+      requestAnimationFrame(() => {
+        if (!modal.isConnected || modal.contains(document.activeElement)) return;
+        const focusable = focusableIn(modal);
+        if (focusable[0]) focusable[0].focus();
+        else {
+          modal.tabIndex = -1;
+          modal.focus();
+        }
+      });
+    }
   }
 
   function installModalKeyboardGuard() {
@@ -175,14 +235,14 @@
       if (!modal) return;
 
       if (event.key === 'Escape') {
-        const close = modal.querySelector('[aria-label="Close"], [data-bp-modal-close], [data-customer-close], [data-comm-close], .crm-modal-close, .carrier-modal-close, .finance-modal-close, .orders-modal-close, .report-modal-close, .stripe-modal-close');
+        event.preventDefault();
+        const close = modal.querySelector(runtimeCloseSelectors);
         close?.click();
         return;
       }
 
       if (event.key !== 'Tab') return;
-      const focusable = [...modal.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])')]
-        .filter((node) => node.offsetParent !== null);
+      const focusable = focusableIn(modal);
       if (!focusable.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -202,6 +262,7 @@
     enhanceTables();
     enhanceForms();
     enhanceLiveRegions();
+    syncModalFocus();
   }
 
   let scheduled = false;
@@ -219,11 +280,12 @@
   syncDynamicUi();
 
   const observer = new MutationObserver(scheduleSync);
-  observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['class','hidden','aria-expanded'] });
+  observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['class','hidden','aria-expanded','disabled'] });
 
   window.addEventListener('brokerpad:runtime:ready', scheduleSync);
   window.addEventListener('brokerpad:customers:changed', scheduleSync);
   window.addEventListener('brokerpad:leads:changed', scheduleSync);
   window.addEventListener('brokerpad:orders:changed', scheduleSync);
   window.addEventListener('brokerpad:communications:changed', scheduleSync);
+  window.addEventListener('brokerpad:users:changed', scheduleSync);
 })();
