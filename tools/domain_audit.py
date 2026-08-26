@@ -19,6 +19,7 @@ def main() -> int:
     index = read('index.html')
     build = read('tools/build_static.py')
     settings = read('src/runtime/modules/settings.js')
+    communications = read('src/runtime/modules/communications.js')
     sync = read('src/runtime/modules/sync.js')
     ui = read('src/runtime/ui-system.js')
 
@@ -57,15 +58,27 @@ def main() -> int:
     if 'bpSettingsOwned' not in settings:
         errors.append('legacy Users/Automations/Integrations pages must be explicitly marked as Settings-owned')
 
-    required_contact_tokens = [
-        "customer?.status === 'Do Not Contact'",
+    required_communications_tokens = [
+        "conversationKinds = ['customer', 'team']",
+        "customerStatuses = ['open', 'pending', 'closed']",
+        "teamStatuses = ['active', 'archived']",
+        'participantIds',
+        'BrokerPadDirectory?.activeUsers',
+        'name="participantIds" multiple',
+        "row.kind === 'team'",
+        "row.status === 'archived'",
+        "customerFor(row)?.status === 'Do Not Contact'",
         'conversation.contact.blocked',
         'do_not_contact_first_message',
         'internal notes remain available',
+        'Date.parse(b.updatedAt',
     ]
-    for token in required_contact_tokens:
-        if token not in sync:
-            errors.append(f'contact policy gate missing: {token}')
+    for token in required_communications_tokens:
+        if token not in communications:
+            errors.append(f'Communications domain contract missing: {token}')
+
+    if 'Do Not Contact' in sync or 'conversation.contact.blocked' in sync:
+        errors.append('sync.js must not own Communications contact-policy business rules')
 
     required_modal_closers = [
         '[data-quote-close]', '[data-order-close]', '[data-carrier-close]',
@@ -84,7 +97,7 @@ def main() -> int:
             print(f'ERROR: {error}')
         return 1
 
-    print('Domain audit: PASS · Settings ownership · contact policy · modal accessibility')
+    print('Domain audit: PASS · Settings ownership · Communications domains · modal accessibility')
     return 0
 
 
