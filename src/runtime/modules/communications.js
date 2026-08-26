@@ -71,10 +71,10 @@
     channel: channels.includes(row.channel) ? row.channel : 'internal',
     status: statuses.includes(row.status) ? row.status : 'open',
     assignee: assignees.includes(row.assignee) ? row.assignee : 'unassigned',
-    customerId: String(row.customerId || '').trim(),
-    leadId: String(row.leadId || '').trim(),
-    quoteId: String(row.quoteId || '').trim(),
-    orderId: String(row.orderId || '').trim(),
+    customerId: String(row.customerId || '').trim().toUpperCase(),
+    leadId: String(row.leadId || '').trim().toUpperCase(),
+    quoteId: String(row.quoteId || '').trim().toUpperCase(),
+    orderId: String(row.orderId || '').trim().toUpperCase(),
     priority: String(row.priority || 'Normal').trim() || 'Normal',
     phone: String(row.phone || '').trim(),
     email: String(row.email || '').trim(),
@@ -132,14 +132,20 @@
     layer.innerHTML = '';
   }
 
+  function linkedRecordExists(scope, id) {
+    if (!id) return true;
+    const rows = api.store.get(scope, []);
+    return Array.isArray(rows) && rows.some((row) => String(row.id || '').toUpperCase() === id);
+  }
+
   function openNewConversation(internalOnly, onCommit) {
     const layer = modalShell();
     layer.hidden = false;
     const allowed = internalOnly ? ['internal'] : channels;
     layer.innerHTML = `
-      <div class="bp-runtime-modal" role="dialog" aria-modal="true">
+      <div class="bp-runtime-modal" role="dialog" aria-modal="true" aria-labelledby="bpCommNewTitle">
         <div class="bp-runtime-modal-head">
-          <div><h3>${internalOnly ? 'New Internal Conversation' : 'New Conversation'}</h3><p>External channels remain local until their integration credentials are configured.</p></div>
+          <div><h3 id="bpCommNewTitle">${internalOnly ? 'New Internal Conversation' : 'New Conversation'}</h3><p>External channels remain local until their integration credentials are configured.</p></div>
           <button type="button" class="bp-runtime-close" data-comm-close aria-label="Close">×</button>
         </div>
         <form id="bpCommNewForm" class="bp-runtime-form">
@@ -152,6 +158,7 @@
             <label class="bp-runtime-span-2"><span>Subject</span><input name="subject"></label>
             <label class="bp-runtime-span-2"><span>First message / note</span><textarea name="body" rows="4"></textarea></label>
           </div>
+          <div class="bp-runtime-form-error" id="bpCommNewError" hidden></div>
           <div class="bp-runtime-modal-foot"><span class="bp-runtime-spacer"></span><button type="button" class="btn" data-comm-close>Cancel</button><button type="submit" class="btn primary">Create Conversation</button></div>
         </form>
       </div>`;
@@ -160,7 +167,24 @@
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       const values = Object.fromEntries(new FormData(form).entries());
-      if (!String(values.name || '').trim()) return;
+      const error = layer.querySelector('#bpCommNewError');
+      const customerId = String(values.customerId || '').trim().toUpperCase();
+      const orderId = String(values.orderId || '').trim().toUpperCase();
+      if (!String(values.name || '').trim()) {
+        error.textContent = 'Conversation name is required.';
+        error.hidden = false;
+        return;
+      }
+      if (customerId && !linkedRecordExists('customers', customerId)) {
+        error.textContent = `Customer ${customerId} does not exist.`;
+        error.hidden = false;
+        return;
+      }
+      if (orderId && !linkedRecordExists('orders', orderId)) {
+        error.textContent = `Order ${orderId} does not exist.`;
+        error.hidden = false;
+        return;
+      }
       const channel = values.channel;
       const body = String(values.body || '').trim();
       const initials = String(values.name).trim().split(/\s+/).slice(0, 2).map((part) => part[0] || '').join('').toUpperCase();
@@ -169,8 +193,8 @@
         initials,
         channel,
         assignee: values.assignee,
-        customerId: String(values.customerId || '').toUpperCase(),
-        orderId: String(values.orderId || '').toUpperCase(),
+        customerId,
+        orderId,
         subject: values.subject,
         messages: body ? [{ kind: channel === 'internal' ? 'note' : 'outbound', body, author: 'Current User', channel, delivery: channel === 'internal' ? '' : 'local-only', at: now() }] : [],
       });
@@ -217,8 +241,7 @@
     if (!localNotice) {
       localNotice = document.createElement('div');
       localNotice.dataset.commLocalNotice = '1';
-      localNotice.className = 'secondary';
-      localNotice.style.cssText = 'padding:7px 10px;border-bottom:1px solid #e5e7eb;background:#fff8e7;font-size:10px';
+      localNotice.className = 'bp-local-only-notice';
       localNotice.textContent = 'External messages are stored locally only until channel credentials/webhooks are configured in Settings → Integrations.';
       page.querySelector('.comm-conversation-head')?.after(localNotice);
     }
@@ -244,7 +267,7 @@
         if (status !== 'all' && row.status !== status) return false;
         if (assignee === 'me' && row.assignee !== 'me') return false;
         if (assignee === 'unassigned' && row.assignee !== 'unassigned') return false;
-        return !query || [row.name, row.subject, row.customerId, row.orderId, row.channel, ...(row.messages || []).map((message) => message.body)].join(' ').toLowerCase().includes(query);
+        return !query || [row.name, row.subject, row.customerId, row.leadId, row.quoteId, row.orderId, row.channel, ...(row.messages || []).map((message) => message.body)].join(' ').toLowerCase().includes(query);
       });
     }
 
@@ -272,7 +295,7 @@
           <span class="comm-thread-main"><span class="comm-thread-top"><b>${escapeHtml(row.name)}</b><time>${escapeHtml(relative(row.updatedAt))}</time></span>
           <span class="comm-thread-meta"><span class="comm-source ${escapeHtml(row.channel)}">${escapeHtml(titleChannel(row.channel))}</span><span class="comm-dot"></span><span>${escapeHtml(row.subject || row.status)}</span></span>
           <span class="comm-preview">${escapeHtml(latest?.body || 'No messages yet')}</span></span>${row.unread ? `<span class="comm-unread">${row.unread}</span>` : ''}</button>`;
-      }).join('') : '<div class="secondary" style="padding:18px;text-align:center">No conversations match the current filters.</div>';
+      }).join('') : '<div class="secondary bp-empty-cell">No conversations match the current filters.</div>';
       updateChannelCounts();
       renderConversation();
     }
@@ -280,7 +303,9 @@
     function renderConversation() {
       const row = current();
       if (!row) {
-        messages.innerHTML = '<div class="secondary" style="padding:20px;text-align:center">Select or create a conversation.</div>';
+        messages.innerHTML = '<div class="secondary bp-empty-cell">Select or create a conversation.</div>';
+        composer.disabled = true;
+        sendButton.disabled = true;
         return;
       }
       if (row.unread) {
@@ -341,10 +366,10 @@
       composeMode = button.dataset.compose;
       composeButtons.forEach((item) => item.classList.toggle('active', item === button));
       renderConversation();
-      composer.focus();
+      if (!composer.disabled) composer.focus();
     }));
 
-    sendButton.addEventListener('click', () => {
+    const sendCurrent = () => {
       const row = current();
       const body = composer.value.trim();
       if (!row || !body || row.status === 'closed') return;
@@ -360,6 +385,14 @@
       row.updatedAt = now();
       composer.value = '';
       persist(kind === 'note' ? 'conversation.note.added' : 'conversation.reply.queued', { channel: row.channel, delivery: kind === 'outbound' && row.channel !== 'internal' ? 'local-only' : 'internal' });
+    };
+
+    sendButton.addEventListener('click', sendCurrent);
+    composer.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        sendCurrent();
+      }
     });
 
     page.querySelector('[data-comm-toggle-status]')?.addEventListener('click', () => {
@@ -391,7 +424,7 @@
     }));
 
     api.events.on('communications:changed', () => {
-      conversations = api.store.get(SCOPE, []).map(normalize);
+      conversations = (api.store.get(SCOPE, []) || []).map(normalize);
       renderList();
     });
 
