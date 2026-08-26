@@ -1,0 +1,248 @@
+/* Responsive system: four canonical breakpoints instead of scattered one-offs. */
+@media (max-width: 1280px) {
+  #lander-full-review .kpis,
+  #lander-full-review .reports-kpis,
+  #lander-full-review .bp-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  #lander-full-review .grid3,
+  #lander-full-review .bp-benchmark-grid.three {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  #lander-full-review main,
+  #lander-full-review main#pages {
+    padding: var(--bp-space-5) var(--bp-space-4) var(--bp-space-8) !important;
+  }
+
+  #lander-full-review .grid2,
+  #lander-full-review .calc-layout,
+  #lander-full-review .bp-benchmark-grid,
+  #lander-full-review .comm-shell,
+  #lander-full-review .reports-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  #lander-full-review .detailgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 800px) {
+  #lander-full-review .app {
+    display: block !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+  }
+
+  #lander-full-review .sidebar {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 auto 0 0;
+    z-index: 95;
+    width: min(280px, 86vw) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    transform: translateX(-102%);
+    transition: transform 180ms ease;
+    box-shadow: var(--bp-shadow-lg);
+  }
+
+  #lander-full-review .sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  #lander-full-review .bp-mobile-sidebar-backdrop.is-open {
+    display: block;
+  }
+
+  #lander-full-review .bp-mobile-nav-toggle {
+    display: inline-flex;
+  }
+
+  #lander-full-review .topbar {
+    padding: 0 var(--bp-space-3) !important;
+  }
+
+  #lander-full-review .crumb {
+    flex: 1 1 auto;
+  }
+
+  #lander-full-review .right {
+    flex: 0 1 auto;
+  }
+
+  #lander-full-review .bp-top-search {
+    display: none !important;
+  }
+
+  #lander-full-review .head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--bp-space-3) !important;
+  }
+
+  #lander-full-review .head .actions,
+  #lander-full-review .head > .btn,
+  #lander-full-review .head > button {
+    align-self: flex-start;
+  }
+
+  #lander-full-review .toolbar,
+  #lander-full-review .crm-filterbar,
+  #lander-full-review .comm-filters,
+  #lander-full-review .carrier-compliance-toolbar,
+  #lander-full-review .ci-search-row {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  #lander-full-review .toolbar > *,
+  #lander-full-review .crm-filterbar > *,
+  #lander-full-review .comm-filters > *,
+  #lander-full-review .carrier-compliance-toolbar > *,
+  #lander-full-review .ci-search-row > * {
+    min-width: 0 !important;
+    flex: 1 1 180px;
+  }
+
+  #lander-full-review .tablewrap,
+  #lander-full-review .reports-tablewrap,
+  #lander-full-review .quotes-tablewrap,
+  #lander-full-review .carrier-table-wrap,
+  #lander-full-review .carrier-compliance-table-wrap,
+  #lander-full-review .finance-table-wrap,
+  #lander-full-review .stripe-table-wrap,
+  #lander-full-review .ci-table-wrap,
+  #lander-full-review .bp-tablewrap {
+    overflow-x: auto !important;
+    border: 1px solid var(--bp-border) !important;
+    background: var(--bp-surface) !important;
+  }
+
+  #lander-full-review table {
+    min-width: 720px !important;
+  }
+
+  #lander-full-review .kpis,
+  #lander-full-review .reports-kpis,
+  #lander-full-review .finance-kpis,
+  #lander-full-review .orders-status-kpis,
+  #lander-full-review .carrier-compliance-kpis,
+  #lander-full-review .ci-kpis,
+  #lander-full-review .bp-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #lander-full-review .formgrid,
+  #lander-full-review .crm-form-grid,
+  #lander-full-review .carrier-form-grid,
+  #lander-full-review .finance-form-grid,
+  #lander-full-review .orders-form-grid,
+  #lander-full-review .stripe-form-grid,
+  #lander-full-review .lb-form-grid,
+  #lander-full-review .bp-compact-form,
+  .bp-runtime-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  #lander-full-review .bp-runtime-span-2,
+  .bp-runtime-span-2 {
+    grid-column: auto !important;
+  }
+
+  #lander-full-review .notification-dropdown {
+    right: -76px !important;
+    width: min(320px, calc(100vw - 24px)) !important;
+  }
+
+  #lander-full-review .user-dropdown {
+    right: 0 !important;
+    max-width: calc(100vw - 24px);
+  }
+
+  #lander-full-review .bp-modal-layer,
+  #lander-full-review .crm-modal-layer,
+  #lander-full-review .carrier-modal-layer,
+  #lander-full-review .finance-modal-layer,
+  #lander-full-review .quote-modal-layer,
+  #lander-full-review .report-modal-layer,
+  #lander-full-review .stripe-modal-layer,
+  #lander-full-review .lb-modal-layer,
+  .bp-runtime-modal-layer {
+    padding: 10px !important;
+  }
+
+  #lander-full-review .bp-modal,
+  #lander-full-review .crm-modal,
+  #lander-full-review .carrier-modal,
+  #lander-full-review .finance-modal,
+  #lander-full-review .orders-modal-dialog,
+  #lander-full-review .quote-record-modal,
+  #lander-full-review .report-modal,
+  #lander-full-review .stripe-modal,
+  #lander-full-review .lb-modal,
+  .bp-runtime-modal {
+    width: 100% !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  #lander-full-review main,
+  #lander-full-review main#pages {
+    padding: var(--bp-space-4) var(--bp-space-3) var(--bp-space-6) !important;
+  }
+
+  #lander-full-review h1,
+  #lander-full-review .head h1 {
+    font-size: 20px !important;
+  }
+
+  #lander-full-review .kpis,
+  #lander-full-review .reports-kpis,
+  #lander-full-review .finance-kpis,
+  #lander-full-review .orders-status-kpis,
+  #lander-full-review .carrier-compliance-kpis,
+  #lander-full-review .ci-kpis,
+  #lander-full-review .bp-metrics,
+  #lander-full-review .detailgrid,
+  #lander-full-review .grid3,
+  #lander-full-review .bp-benchmark-grid.three {
+    grid-template-columns: 1fr !important;
+  }
+
+  #lander-full-review .topbar .topbtn:not(.notification-bell),
+  #lander-full-review #helpButton {
+    display: none !important;
+  }
+
+  #lander-full-review .btn,
+  #lander-full-review .topbtn {
+    min-height: 36px !important;
+  }
+
+  #lander-full-review .bp-toast,
+  #lander-full-review .ci-toast,
+  #lander-full-review .report-toast {
+    left: var(--bp-space-3) !important;
+    right: var(--bp-space-3) !important;
+    bottom: var(--bp-space-3) !important;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #lander-full-review *,
+  #lander-full-review *::before,
+  #lander-full-review *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
