@@ -107,9 +107,9 @@
     const entityOptions = (type) => referencesFor(type).map((row) => `<option value="${escapeHtml(row.id)}" ${row.id === current.entityId ? 'selected' : ''}>${escapeHtml(refLabel(type, row))}</option>`).join('');
 
     layer.innerHTML = `
-      <div class="bp-runtime-modal bp-runtime-modal-wide" role="dialog" aria-modal="true">
+      <div class="bp-runtime-modal bp-runtime-modal-wide" role="dialog" aria-modal="true" aria-labelledby="bpDocumentModalTitle">
         <div class="bp-runtime-modal-head">
-          <div><h3>${creating ? 'Register Document' : 'Edit Document'}</h3><p>${creating ? 'Create a canonical document record. File storage/signing remains integration-backed.' : escapeHtml(current.id)}</p></div>
+          <div><h3 id="bpDocumentModalTitle">${creating ? 'Register Document' : 'Edit Document'}</h3><p>${creating ? 'Create a canonical document record. File storage/signing remains integration-backed.' : escapeHtml(current.id)}</p></div>
           <button type="button" class="bp-runtime-close" data-document-close aria-label="Close">×</button>
         </div>
         <form id="bpDocumentForm" class="bp-runtime-form">
@@ -123,6 +123,7 @@
             <label><span>Source</span><input name="source" value="${escapeHtml(current.source)}"></label>
             <label class="bp-runtime-span-2"><span>Notes</span><textarea name="notes" rows="4">${escapeHtml(current.notes)}</textarea></label>
           </div>
+          ${(current.signedAt || current.verifiedAt) ? `<div class="bp-runtime-integrity-warning">Historical milestones are preserved: ${current.signedAt ? `signed ${escapeHtml(formatDate(current.signedAt))}` : ''}${current.signedAt && current.verifiedAt ? ' · ' : ''}${current.verifiedAt ? `verified ${escapeHtml(formatDate(current.verifiedAt))}` : ''}.</div>` : ''}
           <div class="bp-runtime-form-error" id="bpDocumentFormError" hidden></div>
           <div class="bp-runtime-modal-foot">
             ${creating ? '' : '<button type="button" class="btn danger" data-document-delete>Delete</button>'}
@@ -150,13 +151,19 @@
         error.hidden = false;
         return;
       }
+      const linked = referencesFor(values.entityType).some((row) => String(row.id) === String(values.entityId));
+      if (!linked) {
+        error.textContent = 'The linked record no longer exists. Select a current record.';
+        error.hidden = false;
+        return;
+      }
       const nextStatus = values.status;
       const next = normalize({
         ...current,
         ...values,
         version: Number(values.version),
-        signedAt: nextStatus === 'Signed' ? (current.signedAt || now()) : '',
-        verifiedAt: nextStatus === 'Verified' ? (current.verifiedAt || now()) : '',
+        signedAt: nextStatus === 'Signed' ? (current.signedAt || now()) : current.signedAt,
+        verifiedAt: nextStatus === 'Verified' ? (current.verifiedAt || now()) : current.verifiedAt,
         updatedAt: now(),
       });
       onCommit('save', next, creating);
@@ -223,7 +230,7 @@
           <td>v${doc.version}</td>
           <td>${escapeHtml(formatDate(doc.uploadedAt))}</td>
           <td><button type="button" class="btn ghost" data-document-edit="${escapeHtml(doc.id)}">Edit</button></td>
-        </tr>`).join('') : '<tr><td colspan="7" class="secondary" style="padding:18px;text-align:center">No documents match the current filters.</td></tr>';
+        </tr>`).join('') : '<tr><td colspan="7" class="secondary bp-empty-cell">No documents match the current filters.</td></tr>';
     };
 
     const commit = (action, doc, creating) => {
@@ -254,7 +261,7 @@
       if (doc) openEditor(doc, commit);
     });
     api.events.on('documents:changed', () => {
-      documents = api.store.get(SCOPE, []).map(normalize);
+      documents = (api.store.get(SCOPE, []) || []).map(normalize);
       render();
     });
 
