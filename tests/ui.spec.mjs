@@ -7,6 +7,11 @@ const viewports = [
   { name: 'mobile', width: 390, height: 844 },
 ];
 
+const expectedRenderedNav = [
+  'dashboard', 'crm', 'quotes', 'quote-calculator', 'orders', 'carriers',
+  'communications', 'documents', 'finance', 'reports', 'audit', 'settings',
+];
+
 async function boot(page, viewport) {
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -24,10 +29,22 @@ async function assertNoDocumentOverflow(page, viewport) {
 }
 
 async function navItems(page) {
-  return page.locator('#nav button').evaluateAll((nodes) => nodes.map((node, index) => ({
-    index,
-    text: (node.textContent || '').trim(),
-  })));
+  return page.locator('#nav button').evaluateAll((nodes) => nodes
+    .filter((node) => {
+      const style = getComputedStyle(node);
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    })
+    .map((node) => ({
+      key: node.dataset.go || (node.dataset.crmNav ? 'crm' : ''),
+      text: (node.textContent || '').trim(),
+    }))
+    .filter((item) => item.key));
+}
+
+function navButton(page, item) {
+  return item.key === 'crm'
+    ? page.locator('#nav button[data-crm-nav]').first()
+    : page.locator(`#nav button[data-go="${item.key}"]`).first();
 }
 
 async function openNavItem(page, item, mobile) {
@@ -35,7 +52,8 @@ async function openNavItem(page, item, mobile) {
     const toggle = page.locator('.bp-mobile-nav-toggle');
     if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
   }
-  const button = page.locator('#nav button').nth(item.index);
+  const button = navButton(page, item);
+  await button.scrollIntoViewIfNeeded();
   await button.click();
   await expect(button).toHaveClass(/active/);
   await expect(button).toHaveAttribute('aria-current', 'page');
@@ -49,7 +67,7 @@ for (const viewport of viewports) {
   test(`all routed pages are structurally consistent at ${viewport.name}`, async ({ page }) => {
     await boot(page, viewport);
     const items = await navItems(page);
-    expect(items.length).toBeGreaterThanOrEqual(17);
+    expect(items.map((item) => item.key)).toEqual(expectedRenderedNav);
 
     for (const item of items) {
       await openNavItem(page, item, viewport.width <= 800);
@@ -97,7 +115,7 @@ test('modal geometry remains inside a mobile viewport', async ({ page }) => {
   const viewport = viewports[3];
   await boot(page, viewport);
   const items = await navItems(page);
-  const crm = items.find((item) => /crm/i.test(item.text));
+  const crm = items.find((item) => item.key === 'crm');
   expect(crm).toBeTruthy();
   await openNavItem(page, crm, true);
 
@@ -122,9 +140,9 @@ for (const viewport of [viewports[0], viewports[3]]) {
       const item = items.find((candidate) => pattern.test(candidate.text));
       if (!item) continue;
       const active = await openNavItem(page, item, viewport.width <= 800);
-      const key = (await active.getAttribute('data-page')) || item.text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      await page.screenshot({ path: testInfo.outputPath(`${key}-${viewport.name}.png`), fullPage: true });
+      const key = (await active.getAttribute('data-page')) || item.key;
       await assertNoDocumentOverflow(page, viewport);
+      await page.screenshot({ path: testInfo.outputPath(`${key}-${viewport.name}.png`), fullPage: true });
     }
   });
 }
