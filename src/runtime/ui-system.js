@@ -10,16 +10,16 @@
 
   const setText = (selector, value) => {
     const node = $(selector);
-    if (node) node.textContent = value;
+    if (node && node.textContent !== value) node.textContent = value;
   };
 
   function normalizeProductLanguage() {
     const brand = $('.brand span:last-child');
-    if (brand) brand.textContent = 'BrokerPad';
+    if (brand && brand.textContent !== 'BrokerPad') brand.textContent = 'BrokerPad';
     const mark = $('.brand .mark');
-    if (mark) mark.textContent = 'BP';
+    if (mark && mark.textContent !== 'BP') mark.textContent = 'BP';
     const crumb = $('.crumb');
-    if (crumb?.firstChild?.nodeType === Node.TEXT_NODE) crumb.firstChild.textContent = 'BrokerPad / ';
+    if (crumb?.firstChild?.nodeType === Node.TEXT_NODE && crumb.firstChild.textContent !== 'BrokerPad / ') crumb.firstChild.textContent = 'BrokerPad / ';
 
     const userButton = $('#userAvatarButton');
     if (userButton) userButton.setAttribute('aria-label', 'User menu');
