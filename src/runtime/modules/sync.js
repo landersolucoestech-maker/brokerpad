@@ -87,12 +87,155 @@
     }
   };
 
-  api.events.on('customers:changed', syncCustomers);
+  function normalizeTableContracts() {
+    document.querySelectorAll('#lander-full-review table').forEach((table) => {
+      const headerRow = table.querySelector('thead tr');
+      const dataRow = [...table.querySelectorAll('tbody tr')].find((row) => row.cells.length > 1 && !row.querySelector('td[colspan]'));
+      if (!headerRow || !dataRow) return;
+
+      while (headerRow.cells.length > dataRow.cells.length) {
+        const last = headerRow.cells[headerRow.cells.length - 1];
+        const previous = headerRow.cells[headerRow.cells.length - 2];
+        if (!last || !/^actions$/i.test(last.textContent.trim())) break;
+        if (previous && /^actions$/i.test(previous.textContent.trim())) {
+          last.remove();
+          continue;
+        }
+        break;
+      }
+    });
+  }
+
+  function communicationState() {
+    const page = document.querySelector('[data-page="communications"]');
+    if (!page) return { page: null, row: null, customer: null, noteMode: false, blocked: false };
+
+    const activeId = page.querySelector('.comm-thread.active[data-conversation-id]')?.dataset.conversationId || '';
+    const conversations = api.store.get('communications', []);
+    const row = Array.isArray(conversations) ? conversations.find((item) => item.id === activeId) : null;
+    const customers = api.store.get('customers', []);
+    const customer = row?.customerId && Array.isArray(customers)
+      ? customers.find((item) => item.id === row.customerId)
+      : null;
+    const noteMode = page.querySelector('[data-compose].active')?.dataset.compose === 'note';
+    const blocked = Boolean(
+      row &&
+      row.channel !== 'internal' &&
+      !noteMode &&
+      customer?.status === 'Do Not Contact'
+    );
+    return { page, row, customer, noteMode, blocked };
+  }
+
+  function ensureContactNotice(page) {
+    let notice = page.querySelector('[data-bp-contact-policy-notice]');
+    if (notice) return notice;
+    const composer = page.querySelector('#commComposer');
+    if (!composer?.parentElement) return null;
+    notice = document.createElement('div');
+    notice.dataset.bpContactPolicyNotice = '1';
+    notice.className = 'bp-contact-policy-notice';
+    notice.hidden = true;
+    composer.parentElement.insertBefore(notice, composer);
+    return notice;
+  }
+
+  function applyCommunicationPolicy() {
+    const { page, row, customer, blocked } = communicationState();
+    if (!page || !row) return;
+    const composer = page.querySelector('#commComposer');
+    const send = page.querySelector('#commSend');
+    const notice = ensureContactNotice(page);
+    const closed = row.status === 'closed';
+
+    if (composer) composer.disabled = closed || blocked;
+    if (send) send.disabled = closed || blocked;
+
+    if (notice) {
+      notice.hidden = !blocked;
+      notice.textContent = blocked
+        ? `${customer?.name || row.name} is marked Do Not Contact. External replies are blocked; internal notes remain available.`
+        : '';
+    }
+  }
+
+  function blockDncSend(event) {
+    const send = event.target.closest('#commSend');
+    if (!send) return;
+    const { row, customer, blocked } = communicationState();
+    if (!row || !blocked) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    api.audit.record('conversation.contact.blocked', 'conversation', row.id, {
+      customerId: customer?.id || row.customerId || '',
+      channel: row.channel,
+      reason: 'do_not_contact',
+    });
+    applyCommunicationPolicy();
+  }
+
+  function blockDncFirstMessage(event) {
+    const form = event.target.closest('#bpCommNewForm');
+    if (!form) return;
+    const values = Object.fromEntries(new FormData(form).entries());
+    const channel = String(values.channel || 'internal');
+    const customerId = String(values.customerId || '').trim().toUpperCase();
+    const body = String(values.body || '').trim();
+    if (!customerId || channel === 'internal' || !body) return;
+
+    const customers = api.store.get('customers', []);
+    const customer = Array.isArray(customers) ? customers.find((item) => item.id === customerId) : null;
+    if (customer?.status !== 'Do Not Contact') return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const error = form.querySelector('#bpCommNewError');
+    if (error) {
+      error.textContent = `${customer.name || customerId} is marked Do Not Contact. Create the conversation without an external first message or use an internal note.`;
+      error.hidden = false;
+    }
+    api.audit.record('conversation.contact.blocked', 'customer', customerId, {
+      channel,
+      reason: 'do_not_contact_first_message',
+    });
+  }
+
+  let scheduled = false;
+  const scheduleConsistency = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      normalizeTableContracts();
+      applyCommunicationPolicy();
+    });
+  };
+
+  document.addEventListener('click', blockDncSend, true);
+  document.addEventListener('submit', blockDncFirstMessage, true);
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('[data-compose],[data-conversation-id]')) setTimeout(scheduleConsistency, 0);
+  });
+
+  api.events.on('customers:changed', () => {
+    syncCustomers();
+    scheduleConsistency();
+  });
   api.events.on('leads:changed', syncLeads);
   api.events.on('orders:changed', syncCustomers);
   api.events.on('quotes:changed', syncLeads);
+  api.events.on('communications:changed', scheduleConsistency);
+
+  const observer = new MutationObserver(scheduleConsistency);
+  const root = document.getElementById('lander-full-review');
+  if (root) observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'disabled'] });
 
   syncCustomers();
   syncLeads();
-  api.audit.record('runtime.sync.ready', 'module', 'sync');
+  normalizeTableContracts();
+  applyCommunicationPolicy();
+  api.audit.record('runtime.sync.ready', 'module', 'sync', {
+    tableContracts: true,
+    contactPolicy: 'do-not-contact',
+  });
 })();
