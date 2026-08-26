@@ -35,7 +35,7 @@
       const sourceHtml = await source.async('text');
       const html = sourceHtml
         .replace('</head>', '<link rel="stylesheet" href="src/runtime/app.css"></head>')
-        .replace('</body>', '<script src="src/runtime/app.js"><\/script><script src="src/runtime/modules/customers.js"><\/script></body>');
+        .replace('</body>', '<script src="src/runtime/app.js"><\/script><script src="src/runtime/modules/customers.js"><\/script><script src="src/runtime/modules/leads.js"><\/script></body>');
       document.open();
       document.write(html);
       document.close();
