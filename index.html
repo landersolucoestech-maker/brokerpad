@@ -35,7 +35,7 @@
       const sourceHtml = await source.async('text');
       const html = sourceHtml
         .replace('</head>', '<link rel="stylesheet" href="src/runtime/app.css"></head>')
-        .replace('</body>', '<script src="src/runtime/app.js"><\/script><script src="src/runtime/modules/customers.js"><\/script><script src="src/runtime/modules/leads.js"><\/script><script src="src/runtime/modules/quotes.js"><\/script><script src="src/runtime/modules/orders.js"><\/script><script src="src/runtime/modules/carriers.js"><\/script><script src="src/runtime/modules/dispatch.js"><\/script><script src="src/runtime/modules/compliance.js"><\/script><script src="src/runtime/modules/finance.js"><\/script><script src="src/runtime/modules/risk.js"><\/script><script src="src/runtime/modules/sync.js"><\/script><script src="src/runtime/modules/audit.js"><\/script></body>');
+        .replace('</body>', '<script src="src/runtime/app.js"><\/script><script src="src/runtime/modules/customers.js"><\/script><script src="src/runtime/modules/leads.js"><\/script><script src="src/runtime/modules/quotes.js"><\/script><script src="src/runtime/modules/orders.js"><\/script><script src="src/runtime/modules/carriers.js"><\/script><script src="src/runtime/modules/dispatch.js"><\/script><script src="src/runtime/modules/compliance.js"><\/script><script src="src/runtime/modules/finance.js"><\/script><script src="src/runtime/modules/risk.js"><\/script><script src="src/runtime/modules/documents.js"><\/script><script src="src/runtime/modules/communications.js"><\/script><script src="src/runtime/modules/sync.js"><\/script><script src="src/runtime/modules/audit.js"><\/script></body>');
       document.open();
       document.write(html);
       document.close();
