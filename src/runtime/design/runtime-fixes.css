@@ -7,6 +7,12 @@
   display: none !important;
 }
 
+/* Orders keeps the lifecycle strip but removes the four benchmark cards below it.
+   Hide the benchmark grids immediately; the DOM guard then prunes them entirely. */
+#lander-full-review [data-page="orders"] .bp-order-benchmark > .bp-benchmark-grid {
+  display: none !important;
+}
+
 /* Quotes has one canonical runtime owner. The legacy benchmark surface and
    legacy CRUD overlays must never become visible while the runtime takes over. */
 #lander-full-review [data-page="quotes"] .bp-quote-benchmark:not(.bp-runtime-benchmark-blocker),
