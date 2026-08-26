@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BrokerPad</title>
+  <style>
+    html,body{height:100%;margin:0;font-family:Inter,Arial,sans-serif;background:#f6f7f9;color:#1f2937}
+    .boot{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+    .boot strong{font-size:20px}.boot small{color:#667085}.bar{width:240px;height:4px;border-radius:999px;background:#e5e7eb;overflow:hidden}
+    .bar:before{content:"";display:block;height:100%;width:35%;background:#0f6b67;animation:load 1s ease-in-out infinite alternate}
+    @keyframes load{to{transform:translateX(190%)}}
+    .error{max-width:720px;padding:24px;color:#991b1b;white-space:pre-wrap}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+  <div class="boot" id="boot"><strong>BrokerPad</strong><div class="bar"></div><small>Loading application…</small></div>
+  <script>
+  (async function () {
+    try {
+      if (!window.JSZip) throw new Error('JSZip failed to load.');
+      const urls = Array.from({length:20}, (_, i) => `bootstrap/source/part-${String(i).padStart(2,'0')}.b64`);
+      const parts = await Promise.all(urls.map(async url => {
+        const response = await fetch(url, {cache:'no-store'});
+        if (!response.ok) throw new Error(`Failed to load ${url}: HTTP ${response.status}`);
+        return (await response.text()).trim();
+      }));
+      const binary = atob(parts.join(''));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const zip = await JSZip.loadAsync(bytes);
+      const source = zip.file('brokerpad-benchmark-consolidated/index.html');
+      if (!source) throw new Error('BrokerPad index.html was not found in the verified source archive.');
+      const html = await source.async('text');
+      document.open();
+      document.write(html);
+      document.close();
+    } catch (error) {
+      document.body.innerHTML = `<div class="boot"><div class="error"><strong>BrokerPad could not be loaded.</strong><br><br>${String(error && error.stack || error)}</div></div>`;
+      console.error(error);
+    }
+  })();
+  </script>
+</body>
+</html>
