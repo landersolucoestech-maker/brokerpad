@@ -2,6 +2,14 @@
 
 BrokerPad is the development workspace for the Auto Transport Broker platform.
 
+## Live development preview
+
+Use this single permanent URL to follow the current `dev` branch visually:
+
+https://raw.githack.com/landersolucoestech-maker/brokerpad/dev/index.html
+
+The preview reads directly from `dev`, so new commits become visible on the same URL after the development cache refreshes.
+
 ## Branch policy
 
 - All development work must be performed exclusively on `dev`.
