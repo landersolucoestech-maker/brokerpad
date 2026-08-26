@@ -1,0 +1,195 @@
+/* Buttons and interactive controls */
+#lander-full-review button,
+#lander-full-review [role="button"] {
+  font-family: var(--bp-font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+#lander-full-review .btn,
+#lander-full-review .topbtn,
+#lander-full-review .carrier-modal-btn,
+#lander-full-review .qsmallbtn:not(.quote-preview *),
+#lander-full-review .report-actions .btn,
+#lander-full-review .bp-report-actions .btn {
+  min-height: var(--bp-control-md) !important;
+  border: 1px solid var(--bp-border-strong) !important;
+  border-radius: var(--bp-radius-sm) !important;
+  padding: 0 11px !important;
+  background: var(--bp-surface) !important;
+  color: var(--bp-text-strong) !important;
+  font-size: var(--bp-text-sm) !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  box-shadow: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease, transform 80ms ease;
+}
+
+#lander-full-review .btn:hover:not(:disabled),
+#lander-full-review .topbtn:hover:not(:disabled),
+#lander-full-review .carrier-modal-btn:hover:not(:disabled) {
+  border-color: #aeb6c1 !important;
+  background: var(--bp-surface-hover) !important;
+}
+
+#lander-full-review .btn:active:not(:disabled),
+#lander-full-review .topbtn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+#lander-full-review .btn.primary,
+#lander-full-review button.primary,
+#lander-full-review .ci-search-btn,
+#lander-full-review .btn[data-variant="primary"] {
+  border-color: var(--bp-accent) !important;
+  background: var(--bp-accent) !important;
+  color: #fff !important;
+}
+
+#lander-full-review .btn.primary:hover:not(:disabled),
+#lander-full-review button.primary:hover:not(:disabled),
+#lander-full-review .ci-search-btn:hover:not(:disabled) {
+  border-color: var(--bp-accent-hover) !important;
+  background: var(--bp-accent-hover) !important;
+}
+
+#lander-full-review .btn.ghost,
+#lander-full-review .crm-more,
+#lander-full-review .order-more,
+#lander-full-review .quote-more {
+  background: transparent !important;
+}
+
+#lander-full-review .btn.danger,
+#lander-full-review .danger.btn {
+  border-color: var(--bp-danger-border) !important;
+  background: var(--bp-danger-bg) !important;
+  color: var(--bp-danger) !important;
+}
+
+#lander-full-review button:disabled,
+#lander-full-review input:disabled,
+#lander-full-review select:disabled,
+#lander-full-review textarea:disabled,
+#lander-full-review [aria-disabled="true"] {
+  cursor: not-allowed !important;
+  opacity: .55 !important;
+}
+
+#lander-full-review :focus-visible,
+.bp-runtime-modal-layer :focus-visible {
+  outline: 2px solid var(--bp-accent) !important;
+  outline-offset: 2px !important;
+  box-shadow: var(--bp-focus) !important;
+}
+
+/* Form controls */
+#lander-full-review input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]),
+#lander-full-review select,
+#lander-full-review textarea,
+.bp-runtime-modal-layer input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]),
+.bp-runtime-modal-layer select,
+.bp-runtime-modal-layer textarea {
+  width: 100%;
+  min-height: var(--bp-control-md) !important;
+  border: 1px solid var(--bp-border-strong) !important;
+  border-radius: var(--bp-radius-sm) !important;
+  background: var(--bp-surface) !important;
+  color: var(--bp-text) !important;
+  padding: 0 10px !important;
+  font-family: var(--bp-font-sans) !important;
+  font-size: var(--bp-text-sm) !important;
+  line-height: 1.25 !important;
+  box-shadow: none !important;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+#lander-full-review textarea,
+.bp-runtime-modal-layer textarea {
+  min-height: 84px !important;
+  padding: 9px 10px !important;
+  resize: vertical;
+  line-height: var(--bp-leading-normal) !important;
+}
+
+#lander-full-review input::placeholder,
+#lander-full-review textarea::placeholder,
+.bp-runtime-modal-layer input::placeholder,
+.bp-runtime-modal-layer textarea::placeholder {
+  color: #98a2b3 !important;
+  opacity: 1;
+}
+
+#lander-full-review input:not([type="checkbox"]):not([type="radio"]):focus,
+#lander-full-review select:focus,
+#lander-full-review textarea:focus,
+.bp-runtime-modal-layer input:focus,
+.bp-runtime-modal-layer select:focus,
+.bp-runtime-modal-layer textarea:focus {
+  border-color: var(--bp-accent) !important;
+  outline: 0 !important;
+  box-shadow: var(--bp-focus) !important;
+}
+
+#lander-full-review .quote-preview input,
+#lander-full-review .quote-preview select,
+#lander-full-review .quote-preview textarea {
+  box-shadow: none !important;
+}
+
+#lander-full-review input[type="checkbox"],
+#lander-full-review input[type="radio"],
+.bp-runtime-modal-layer input[type="checkbox"],
+.bp-runtime-modal-layer input[type="radio"] {
+  width: 16px !important;
+  height: 16px !important;
+  min-height: 16px !important;
+  accent-color: var(--bp-accent);
+}
+
+#lander-full-review .field label,
+#lander-full-review .carrier-field label,
+#lander-full-review .crm-form-field > label,
+#lander-full-review .finance-form label,
+#lander-full-review .stripe-field label,
+#lander-full-review .lb-field label,
+#lander-full-review .bp-runtime-grid label > span,
+.bp-runtime-modal-layer .bp-runtime-grid label > span {
+  margin-bottom: var(--bp-space-1) !important;
+  color: #475467 !important;
+  font-size: var(--bp-text-xs) !important;
+  font-weight: 700 !important;
+  line-height: var(--bp-leading-tight) !important;
+}
+
+#lander-full-review .field,
+#lander-full-review .carrier-field,
+#lander-full-review .crm-form-field,
+#lander-full-review .stripe-field,
+#lander-full-review .lb-field {
+  min-width: 0;
+}
+
+/* Toolbars, filters and search */
+#lander-full-review .toolbar,
+#lander-full-review .crm-filterbar,
+#lander-full-review .comm-filters,
+#lander-full-review .carrier-compliance-toolbar,
+#lander-full-review .ci-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--bp-space-2) !important;
+  min-width: 0;
+  margin-bottom: var(--bp-space-2) !important;
+  padding: var(--bp-space-2) !important;
+  border: 1px solid var(--bp-border) !important;
+  border-radius: var(--bp-radius-sm) !important;
+  background: var(--bp-surface) !important;
+}
+
+#lander-full-review .toolbar input,
+#lander-full-review .search-table,
+#lander-full-review .reports-search input,
+#lander-full-review .comm-search input,
+#lander-full-review .ci-search-input {
+  min-width: 220px;
+}
