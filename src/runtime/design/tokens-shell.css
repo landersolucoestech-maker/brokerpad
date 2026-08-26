@@ -1,0 +1,319 @@
+/* BrokerPad UI System — canonical visual layer.
+   Loaded after the verified baseline and runtime styles so one system governs
+   typography, spacing, controls, surfaces, states and responsiveness. */
+
+:root {
+  --bp-font-sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
+  --bp-text-2xs: 9px;
+  --bp-text-xs: 10px;
+  --bp-text-sm: 11px;
+  --bp-text-md: 12px;
+  --bp-text-lg: 14px;
+  --bp-text-xl: 16px;
+  --bp-text-2xl: 22px;
+  --bp-leading-tight: 1.25;
+  --bp-leading-normal: 1.45;
+  --bp-leading-relaxed: 1.55;
+
+  --bp-space-0: 0;
+  --bp-space-1: 4px;
+  --bp-space-2: 8px;
+  --bp-space-3: 12px;
+  --bp-space-4: 16px;
+  --bp-space-5: 20px;
+  --bp-space-6: 24px;
+  --bp-space-8: 32px;
+
+  --bp-radius-xs: 4px;
+  --bp-radius-sm: 6px;
+  --bp-radius-md: 8px;
+  --bp-radius-lg: 10px;
+  --bp-radius-pill: 999px;
+
+  --bp-control-sm: 30px;
+  --bp-control-md: 34px;
+  --bp-control-lg: 38px;
+  --bp-topbar-height: 62px;
+  --bp-sidebar-width: 235px;
+  --bp-content-max: 1550px;
+
+  --bp-bg: #f5f6f7;
+  --bp-surface: #ffffff;
+  --bp-surface-subtle: #fafbfc;
+  --bp-surface-muted: #f7f8f9;
+  --bp-surface-hover: #f3f5f7;
+  --bp-sidebar: #111827;
+  --bp-sidebar-hover: #243244;
+  --bp-text: #111827;
+  --bp-text-strong: #1f2937;
+  --bp-text-secondary: #667085;
+  --bp-text-muted: #7b8492;
+  --bp-border: #dfe3e8;
+  --bp-border-strong: #cbd1d8;
+  --bp-accent: #0f6b67;
+  --bp-accent-hover: #0c5a56;
+  --bp-accent-soft: #eef7f6;
+  --bp-success: #22633d;
+  --bp-success-bg: #eef7f0;
+  --bp-success-border: #cfe5d4;
+  --bp-warning: #7a4b00;
+  --bp-warning-bg: #fff7e6;
+  --bp-warning-border: #ecd8ad;
+  --bp-danger: #9b2c2c;
+  --bp-danger-bg: #fff1f1;
+  --bp-danger-border: #efcaca;
+  --bp-info: #244a7c;
+  --bp-info-bg: #eef4fb;
+  --bp-info-border: #cbd9eb;
+
+  --bp-shadow-sm: 0 1px 2px rgba(17, 24, 39, .06);
+  --bp-shadow-md: 0 10px 28px rgba(17, 24, 39, .14);
+  --bp-shadow-lg: 0 24px 70px rgba(17, 24, 39, .22);
+  --bp-focus: 0 0 0 3px rgba(15, 107, 103, .14);
+}
+
+html,
+body {
+  min-height: 100%;
+  min-height: 100vh;
+  background: var(--bp-bg);
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  color: var(--bp-text);
+  font-family: var(--bp-font-sans);
+  font-size: var(--bp-text-md);
+  line-height: var(--bp-leading-normal);
+  overflow-x: hidden;
+}
+
+#lander-full-review {
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  border-radius: 0 !important;
+  background: var(--bp-bg) !important;
+  color: var(--bp-text);
+  font-family: var(--bp-font-sans) !important;
+  font-size: var(--bp-text-md);
+  line-height: var(--bp-leading-normal);
+}
+
+#lander-full-review *,
+#lander-full-review *::before,
+#lander-full-review *::after {
+  box-sizing: border-box;
+}
+
+#lander-full-review .app {
+  display: grid;
+  grid-template-columns: var(--bp-sidebar-width) minmax(0, 1fr);
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  align-items: stretch;
+  background: var(--bp-bg);
+}
+
+#lander-full-review .content {
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bp-bg);
+}
+
+#lander-full-review .sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  width: var(--bp-sidebar-width);
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: var(--bp-space-5);
+  background: var(--bp-sidebar) !important;
+  color: #d1d5db;
+  scrollbar-width: thin;
+  scrollbar-color: #344054 transparent;
+}
+
+#lander-full-review .brand {
+  height: var(--bp-topbar-height) !important;
+  min-height: var(--bp-topbar-height);
+  padding: 0 var(--bp-space-4) !important;
+  gap: var(--bp-space-2) !important;
+  border-bottom: 1px solid #273244 !important;
+  font-size: var(--bp-text-lg) !important;
+  font-weight: 800 !important;
+  letter-spacing: -.01em;
+}
+
+#lander-full-review .mark {
+  width: 30px !important;
+  height: 30px !important;
+  flex: 0 0 30px;
+  border-radius: var(--bp-radius-sm) !important;
+  background: var(--bp-accent) !important;
+}
+
+#lander-full-review .navtitle {
+  padding: var(--bp-space-4) 15px var(--bp-space-2) !important;
+  color: #8a93a1 !important;
+  font-size: var(--bp-text-2xs) !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+  line-height: var(--bp-leading-tight);
+}
+
+#lander-full-review nav {
+  padding: 0 var(--bp-space-2) !important;
+}
+
+#lander-full-review nav button,
+#lander-full-review .accounting-subnav button {
+  min-height: 36px !important;
+  border-radius: var(--bp-radius-sm) !important;
+  padding: 0 10px !important;
+  gap: var(--bp-space-2) !important;
+  color: #c9ced7;
+  font-size: var(--bp-text-sm) !important;
+  font-weight: 500;
+  line-height: 1.2;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+#lander-full-review nav button:hover,
+#lander-full-review nav button.active,
+#lander-full-review nav button[aria-current="page"] {
+  background: var(--bp-sidebar-hover) !important;
+  color: #fff !important;
+}
+
+#lander-full-review nav button.active,
+#lander-full-review nav button[aria-current="page"] {
+  box-shadow: inset 3px 0 var(--bp-accent) !important;
+}
+
+#lander-full-review .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 80 !important;
+  flex: 0 0 var(--bp-topbar-height);
+  min-height: var(--bp-topbar-height);
+  height: var(--bp-topbar-height) !important;
+  padding: 0 var(--bp-space-6) !important;
+  gap: var(--bp-space-3);
+  border-bottom: 1px solid var(--bp-border) !important;
+  background: rgba(255,255,255,.98) !important;
+}
+
+#lander-full-review .crumb {
+  min-width: 0;
+  color: var(--bp-text-secondary) !important;
+  font-size: var(--bp-text-sm) !important;
+  line-height: var(--bp-leading-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#lander-full-review .crumb strong {
+  color: var(--bp-text-strong) !important;
+  font-weight: 700;
+}
+
+#lander-full-review .right {
+  min-width: 0;
+  gap: var(--bp-space-2) !important;
+}
+
+#lander-full-review main,
+#lander-full-review main#pages {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: var(--bp-content-max) !important;
+  margin: 0 auto !important;
+  padding: var(--bp-space-5) var(--bp-space-6) var(--bp-space-8) !important;
+  min-height: calc(100vh - var(--bp-topbar-height));
+  min-height: calc(100dvh - var(--bp-topbar-height));
+  background: var(--bp-bg);
+}
+
+#lander-full-review .page {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Typography */
+#lander-full-review h1,
+#lander-full-review h2,
+#lander-full-review h3,
+#lander-full-review h4,
+#lander-full-review p {
+  font-family: var(--bp-font-sans);
+}
+
+#lander-full-review h1,
+#lander-full-review .head h1 {
+  margin: 0;
+  color: var(--bp-text);
+  font-size: var(--bp-text-2xl) !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -.025em !important;
+}
+
+#lander-full-review .head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--bp-space-4) !important;
+  margin-bottom: var(--bp-space-4) !important;
+}
+
+#lander-full-review .head > div:first-child {
+  min-width: 0;
+}
+
+#lander-full-review .head p,
+#lander-full-review .section-copy,
+#lander-full-review .bp-reports-note,
+#lander-full-review .stripe-settings-help,
+#lander-full-review .ci-disclaimer {
+  max-width: 760px;
+  margin: var(--bp-space-1) 0 0 !important;
+  color: var(--bp-text-secondary) !important;
+  font-size: var(--bp-text-md) !important;
+  line-height: var(--bp-leading-normal) !important;
+}
+
+#lander-full-review .cardh h2,
+#lander-full-review .bp-card-head h3,
+#lander-full-review .stripe-card-head h3,
+#lander-full-review .carrier-form-section h4,
+#lander-full-review .crm-form-section h4 {
+  margin: 0;
+  color: var(--bp-text-strong);
+  font-size: var(--bp-text-md) !important;
+  font-weight: 800 !important;
+  line-height: var(--bp-leading-tight) !important;
+  letter-spacing: 0 !important;
+}
+
+#lander-full-review .secondary,
+#lander-full-review .crm-subtle,
+#lander-full-review .ci-meta,
+#lander-full-review .comm-preview,
+#lander-full-review .record .secondary,
+#lander-full-review .bp-mini-row small {
+  color: var(--bp-text-secondary) !important;
+  font-size: var(--bp-text-xs) !important;
+  line-height: var(--bp-leading-normal) !important;
+}
