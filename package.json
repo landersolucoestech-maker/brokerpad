@@ -1,16 +1,22 @@
 {
   "name": "brokerpad",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build": "python3 tools/build_static.py",
     "preview": "vite preview --host 0.0.0.0",
     "verify:source": "python3 tools/materialize_source.py --verify-only",
-    "materialize:source": "python3 tools/materialize_source.py"
+    "materialize:source": "python3 tools/materialize_source.py",
+    "lint": "node tools/check-js.mjs && python3 tools/ui_audit.py --check",
+    "typecheck": "node tools/check-js.mjs",
+    "test": "python3 tools/ui_audit.py --check",
+    "test:visual": "playwright test",
+    "verify": "npm run verify:source && npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "vite": "^7.1.0"
   }
 }
