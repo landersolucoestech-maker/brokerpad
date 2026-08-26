@@ -14,6 +14,13 @@
   display: none !important;
 }
 
+/* Carrier Onboarding and Private Carrier Network benchmark cards were removed.
+   Hide the entire legacy carrier benchmark zone before the DOM guard converts it
+   into an empty sentinel, preventing flicker and later reinjection. */
+#lander-full-review [data-page="carriers"] .bp-carrier-network-intel {
+  display: none !important;
+}
+
 /* Quotes has one canonical runtime owner. The legacy benchmark surface and
    legacy CRUD overlays must never become visible while the runtime takes over. */
 #lander-full-review [data-page="quotes"] .bp-quote-benchmark:not(.bp-runtime-benchmark-blocker),
