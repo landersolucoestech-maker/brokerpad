@@ -6,6 +6,7 @@
 
   const DASHBOARD_SELECTOR = '[data-page="dashboard"]';
   const ORDERS_SELECTOR = '[data-page="orders"]';
+  const CARRIERS_SELECTOR = '[data-page="carriers"]';
 
   function pruneDashboard() {
     const page = document.querySelector(DASHBOARD_SELECTOR);
@@ -29,9 +30,25 @@
     page.dataset.bpOrderBenchmarkPruned = '1';
   }
 
+  function pruneCarriers() {
+    const page = document.querySelector(CARRIERS_SELECTOR);
+    if (!page) return;
+    const zone = page.querySelector('.bp-carrier-network-intel');
+    if (!zone) return;
+
+    // Keep an empty sentinel so the immutable installCarriers() retry sees the
+    // benchmark as already installed and cannot recreate Carrier Onboarding or
+    // Private Carrier Network. The sentinel itself never renders UI.
+    if (zone.childNodes.length) zone.replaceChildren();
+    zone.classList.add('bp-runtime-carrier-benchmark-blocker');
+    zone.setAttribute('aria-hidden', 'true');
+    page.dataset.bpCarrierBenchmarkPruned = '1';
+  }
+
   function pruneAll() {
     pruneDashboard();
     pruneOrders();
+    pruneCarriers();
   }
 
   function schedulePrune() {
@@ -53,7 +70,7 @@
     observer.observe(pages, { childList: true, subtree: true });
 
     document.addEventListener('click', (event) => {
-      if (event.target.closest('#nav button[data-go="dashboard"], #nav button[data-go="orders"]')) {
+      if (event.target.closest('#nav button[data-go="dashboard"], #nav button[data-go="orders"], #nav button[data-go="carriers"]')) {
         setTimeout(pruneAll, 0);
       }
     });
