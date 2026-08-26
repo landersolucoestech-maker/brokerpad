@@ -1,4 +1,12 @@
 /* Runtime-only UI states that replace inline styling in generated modules. */
+
+/* Dashboard benchmark strip/cards were explicitly removed from the product.
+   Keep them hidden even during the few milliseconds before the DOM guard prunes
+   any legacy reinjection coming from the immutable benchmark source. */
+#lander-full-review [data-page="dashboard"] .bp-benchmark-zone {
+  display: none !important;
+}
+
 #lander-full-review .bp-empty-cell {
   padding: 18px !important;
   text-align: center !important;
