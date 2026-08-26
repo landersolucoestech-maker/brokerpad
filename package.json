@@ -9,9 +9,9 @@
     "preview": "vite preview --host 0.0.0.0",
     "verify:source": "python3 tools/materialize_source.py --verify-only",
     "materialize:source": "python3 tools/materialize_source.py",
-    "lint": "node tools/check-js.mjs && python3 tools/ui_audit.py --check",
+    "lint": "node tools/check-js.mjs && python3 tools/ui_audit.py --check && python3 tools/domain_audit.py",
     "typecheck": "node tools/check-js.mjs",
-    "test": "python3 tools/ui_audit.py --check",
+    "test": "python3 tools/ui_audit.py --check && python3 tools/domain_audit.py",
     "test:visual": "playwright test",
     "verify": "npm run verify:source && npm run lint && npm run typecheck && npm run test && npm run build"
   },
