@@ -1,0 +1,232 @@
+/* Dropdowns, action menus and notifications */
+#lander-full-review .notification-dropdown,
+#lander-full-review .user-dropdown,
+#lander-full-review .crm-action-menu,
+#lander-full-review .order-action-menu,
+#lander-full-review .quote-action-menu,
+#lander-full-review .bp-search-results {
+  border: 1px solid var(--bp-border) !important;
+  border-radius: var(--bp-radius-md) !important;
+  background: var(--bp-surface) !important;
+  box-shadow: var(--bp-shadow-md) !important;
+}
+
+#lander-full-review .user-dropdown-item,
+#lander-full-review .notification-item,
+#lander-full-review .crm-action-menu button,
+#lander-full-review .order-action-menu button,
+#lander-full-review .quote-action-menu button,
+#lander-full-review .bp-search-item {
+  min-height: 34px;
+  border-radius: var(--bp-radius-xs) !important;
+  font-size: var(--bp-text-xs) !important;
+  line-height: var(--bp-leading-normal) !important;
+}
+
+#lander-full-review .user-dropdown-item:hover,
+#lander-full-review .notification-item:hover,
+#lander-full-review .crm-action-menu button:hover,
+#lander-full-review .order-action-menu button:hover,
+#lander-full-review .quote-action-menu button:hover,
+#lander-full-review .bp-search-item:hover {
+  background: var(--bp-surface-hover) !important;
+}
+
+#lander-full-review .notification-item b,
+#lander-full-review .user-dropdown-profile b,
+#lander-full-review .bp-search-item b {
+  font-size: var(--bp-text-xs) !important;
+  line-height: var(--bp-leading-normal) !important;
+}
+
+#lander-full-review .notification-item small,
+#lander-full-review .user-dropdown-profile small,
+#lander-full-review .bp-search-item small {
+  font-size: var(--bp-text-2xs) !important;
+  line-height: var(--bp-leading-normal) !important;
+}
+
+#lander-full-review .avatar,
+#lander-full-review .user-avatar-button {
+  width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border-radius: var(--bp-radius-sm) !important;
+}
+
+/* Modals — one geometry across all owners */
+#lander-full-review .bp-modal-layer,
+#lander-full-review .crm-modal-layer,
+#lander-full-review .carrier-modal-layer,
+#lander-full-review .finance-modal-layer,
+#lander-full-review .orders-modal,
+#lander-full-review .quote-modal-layer,
+#lander-full-review .report-modal-layer,
+#lander-full-review .stripe-modal-layer,
+#lander-full-review .lb-modal-layer,
+.bp-runtime-modal-layer {
+  padding: var(--bp-space-6) !important;
+  background: rgba(17,24,39,.46) !important;
+  backdrop-filter: blur(1px);
+}
+
+#lander-full-review .bp-modal,
+#lander-full-review .crm-modal,
+#lander-full-review .carrier-modal,
+#lander-full-review .finance-modal,
+#lander-full-review .orders-modal-dialog,
+#lander-full-review .quote-record-modal,
+#lander-full-review .report-modal,
+#lander-full-review .stripe-modal,
+#lander-full-review .lb-modal,
+.bp-runtime-modal {
+  width: min(760px, 100%) !important;
+  max-width: calc(100vw - 48px) !important;
+  max-height: calc(100dvh - 48px) !important;
+  border: 1px solid var(--bp-border) !important;
+  border-radius: var(--bp-radius-lg) !important;
+  background: var(--bp-surface) !important;
+  box-shadow: var(--bp-shadow-lg) !important;
+  overflow: hidden;
+}
+
+#lander-full-review .crm-modal-head,
+#lander-full-review .carrier-modal-head,
+#lander-full-review .finance-modal-head,
+#lander-full-review .orders-modal-head,
+#lander-full-review .bp-modal-head,
+#lander-full-review .report-modal-head,
+#lander-full-review .stripe-modal-head,
+#lander-full-review .lb-modal-head,
+.bp-runtime-modal-head {
+  min-height: 54px !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--bp-border) !important;
+  background: var(--bp-surface-subtle) !important;
+}
+
+#lander-full-review .crm-modal-body,
+#lander-full-review .carrier-modal-body,
+#lander-full-review .finance-modal-body,
+#lander-full-review .orders-modal-body,
+#lander-full-review .bp-modal-body,
+#lander-full-review .report-modal-body,
+#lander-full-review .stripe-modal-body,
+#lander-full-review .lb-modal-body,
+.bp-runtime-form {
+  padding: var(--bp-space-4) !important;
+}
+
+#lander-full-review .crm-modal-foot,
+#lander-full-review .carrier-modal-foot,
+#lander-full-review .finance-modal-foot,
+#lander-full-review .orders-modal-foot,
+#lander-full-review .bp-modal-foot,
+#lander-full-review .report-modal-foot,
+#lander-full-review .stripe-modal-foot,
+#lander-full-review .lb-modal-foot,
+.bp-runtime-modal-foot {
+  min-height: 56px !important;
+  padding: 10px 16px !important;
+  gap: var(--bp-space-2) !important;
+  border-top: 1px solid var(--bp-border) !important;
+  background: var(--bp-surface-subtle) !important;
+}
+
+.bp-runtime-modal-head h3 {
+  font-size: var(--bp-text-xl) !important;
+  line-height: var(--bp-leading-tight) !important;
+}
+
+.bp-runtime-modal-head p {
+  font-size: var(--bp-text-xs) !important;
+  line-height: var(--bp-leading-normal) !important;
+}
+
+.bp-runtime-grid,
+#lander-full-review .formgrid,
+#lander-full-review .crm-form-grid,
+#lander-full-review .carrier-form-grid,
+#lander-full-review .finance-form-grid,
+#lander-full-review .orders-form-grid,
+#lander-full-review .stripe-form-grid,
+#lander-full-review .lb-form-grid,
+#lander-full-review .bp-compact-form {
+  gap: var(--bp-space-3) !important;
+}
+
+/* Pagination, empty states, notices, toast */
+#lander-full-review .table-pagination,
+#lander-full-review .ci-pagination {
+  min-height: 46px;
+  gap: var(--bp-space-2) !important;
+  padding: var(--bp-space-2) var(--bp-space-3) !important;
+  border-top: 1px solid var(--bp-border) !important;
+  background: var(--bp-surface-subtle) !important;
+  color: var(--bp-text-secondary);
+  font-size: var(--bp-text-xs) !important;
+}
+
+#lander-full-review .crm-empty,
+#lander-full-review .crm-view-empty,
+#lander-full-review .crm-interaction-empty,
+#lander-full-review .carrier-empty,
+#lander-full-review .finance-empty,
+#lander-full-review .reports-empty,
+#lander-full-review .ci-empty,
+#lander-full-review .lb-empty,
+#lander-full-review .is-empty {
+  padding: var(--bp-space-8) var(--bp-space-4) !important;
+  color: var(--bp-text-secondary) !important;
+  font-size: var(--bp-text-sm) !important;
+  line-height: var(--bp-leading-normal) !important;
+  text-align: center;
+}
+
+#lander-full-review .notice,
+#lander-full-review .crm-full-alert,
+#lander-full-review .crm-duplicate,
+#lander-full-review .crm-conversion,
+#lander-full-review [data-comm-local-notice] {
+  border-radius: var(--bp-radius-sm) !important;
+  padding: var(--bp-space-2) var(--bp-space-3) !important;
+  font-size: var(--bp-text-xs) !important;
+  line-height: var(--bp-leading-normal) !important;
+}
+
+#lander-full-review .bp-toast,
+#lander-full-review .ci-toast,
+#lander-full-review .report-toast {
+  right: var(--bp-space-5) !important;
+  bottom: var(--bp-space-5) !important;
+  max-width: min(390px, calc(100vw - 40px));
+  border-radius: var(--bp-radius-md) !important;
+  padding: 10px 12px !important;
+  font-size: var(--bp-text-xs) !important;
+  line-height: var(--bp-leading-normal) !important;
+  box-shadow: var(--bp-shadow-md) !important;
+}
+
+/* Mobile navigation */
+#lander-full-review .bp-mobile-nav-toggle {
+  display: none;
+  width: var(--bp-control-md);
+  height: var(--bp-control-md);
+  min-height: var(--bp-control-md);
+  flex: 0 0 var(--bp-control-md);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--bp-border-strong);
+  border-radius: var(--bp-radius-sm);
+  background: var(--bp-surface);
+  color: var(--bp-text-strong);
+  font-size: 16px;
+}
+
+#lander-full-review .bp-mobile-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 94;
+  background: rgba(17,24,39,.45);
+}
