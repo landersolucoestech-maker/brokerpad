@@ -18,6 +18,7 @@ JSZIP_CDN = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
 RUNTIME_MODULES = [
     'app.js',
     'modules/dashboard.js',
+    'modules/dashboard-removals.js',
     'modules/customers.js',
     'modules/leads.js',
     'modules/quotes.js',
