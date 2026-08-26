@@ -32,7 +32,10 @@
       const zip = await JSZip.loadAsync(bytes);
       const source = zip.file('brokerpad-benchmark-consolidated/index.html');
       if (!source) throw new Error('BrokerPad index.html was not found in the verified source archive.');
-      const html = await source.async('text');
+      const sourceHtml = await source.async('text');
+      const html = sourceHtml
+        .replace('</head>', '<link rel="stylesheet" href="src/runtime/app.css"></head>')
+        .replace('</body>', '<script src="src/runtime/app.js"><\/script></body>');
       document.open();
       document.write(html);
       document.close();
