@@ -1,0 +1,55 @@
+name: BrokerPad CI
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Verify approved source
+        run: npm run verify:source
+
+      - name: Lint and structural UI audit
+        run: npm run lint
+
+      - name: Type/static check
+        run: npm run typecheck
+
+      - name: Build materialized static site
+        run: npm run build
+
+      - name: Install Chromium for visual audit
+        run: npx playwright install --with-deps chromium
+
+      - name: Visual and responsive audit
+        run: npm run test:visual
+
+      - name: Upload visual audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brokerpad-ui-audit
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14
+          if-no-files-found: ignore
