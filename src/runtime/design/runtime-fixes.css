@@ -1,0 +1,31 @@
+/* Runtime-only UI states that replace inline styling in generated modules. */
+#lander-full-review .bp-empty-cell {
+  padding: 18px !important;
+  text-align: center !important;
+  color: var(--bp-text-secondary) !important;
+}
+
+#lander-full-review .bp-derived-field,
+#lander-full-review input[readonly].bp-derived-field {
+  background: var(--bp-surface-muted) !important;
+  color: var(--bp-text-secondary) !important;
+  cursor: not-allowed;
+}
+
+#lander-full-review .bp-local-only-notice {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--bp-border);
+  background: var(--bp-warning-bg);
+  color: var(--bp-warning);
+  font-size: var(--bp-text-xs);
+  line-height: var(--bp-leading-normal);
+}
+
+#lander-full-review .bp-runtime-integrity-warning {
+  padding: var(--bp-space-2) var(--bp-space-3);
+  border: 1px solid var(--bp-warning-border);
+  border-radius: var(--bp-radius-sm);
+  background: var(--bp-warning-bg);
+  color: var(--bp-warning);
+  font-size: var(--bp-text-xs);
+}
