@@ -21,6 +21,18 @@
   line-height: var(--bp-leading-normal);
 }
 
+#lander-full-review .bp-contact-policy-notice {
+  margin: 0 0 var(--bp-space-2);
+  padding: var(--bp-space-2) var(--bp-space-3);
+  border: 1px solid var(--bp-danger-border);
+  border-radius: var(--bp-radius-sm);
+  background: var(--bp-danger-bg);
+  color: var(--bp-danger);
+  font-size: var(--bp-text-xs);
+  font-weight: 700;
+  line-height: var(--bp-leading-normal);
+}
+
 #lander-full-review .bp-runtime-integrity-warning {
   padding: var(--bp-space-2) var(--bp-space-3);
   border: 1px solid var(--bp-warning-border);
