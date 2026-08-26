@@ -7,6 +7,25 @@
   display: none !important;
 }
 
+/* Quotes has one canonical runtime owner. The legacy benchmark surface and
+   legacy CRUD overlays must never become visible while the runtime takes over. */
+#lander-full-review [data-page="quotes"] .bp-quote-benchmark:not(.bp-runtime-benchmark-blocker),
+#lander-full-review > .quote-modal-layer,
+#lander-full-review > .quote-delete-layer {
+  display: none !important;
+}
+
+#lander-full-review [data-page="quotes"] .bp-runtime-benchmark-blocker {
+  display: none !important;
+}
+
+#lander-full-review [data-page="quotes"] .bp-quotes-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 260px);
+  gap: var(--bp-space-2);
+  align-items: center;
+}
+
 #lander-full-review .bp-empty-cell {
   padding: 18px !important;
   text-align: center !important;
@@ -146,5 +165,9 @@
     max-width: 100% !important;
     overflow-x: auto !important;
     overscroll-behavior-x: contain;
+  }
+
+  #lander-full-review [data-page="quotes"] .bp-quotes-toolbar {
+    grid-template-columns: 1fr;
   }
 }
