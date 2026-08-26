@@ -27,6 +27,7 @@ RUNTIME_MODULES = [
     'modules/finance.js',
     'modules/risk.js',
     'modules/documents.js',
+    'modules/settings.js',
     'modules/communications.js',
     'modules/reports.js',
     'modules/integrity.js',
