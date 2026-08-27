@@ -1,9 +1,21 @@
 /* Explicit product decisions that neutralize immutable benchmark surfaces.
-   The DOM guard removes these nodes; CSS prevents flicker before pruning. */
+   The Legacy Surface Guard keeps invisible sentinels to stop retry installers;
+   this layer prevents any flash before the DOM is normalized. */
 
+#lander-full-review .bp-runtime-legacy-sentinel,
 #lander-full-review [data-page="dashboard"] .bp-benchmark-zone,
+#lander-full-review [data-page="crm"] .bp-lead-intel,
+#lander-full-review [data-page="crm"] .bp-repeat-intel,
+#lander-full-review [data-page="quote-calculator"] .bp-pricing-intel,
 #lander-full-review [data-page="orders"] .bp-order-benchmark,
-#lander-full-review [data-page="carriers"] .bp-carrier-network-intel {
+#lander-full-review [data-page="carriers"] .bp-carrier-network-intel,
+#lander-full-review [data-page="communications"] .bp-comm-benchmark,
+#lander-full-review [data-page="documents"] .bp-doc-benchmark,
+#lander-full-review [data-page="finance"] .bp-fin-benchmark,
+#lander-full-review [data-page="settings"] .bp-auto-benchmark,
+#lander-full-review [data-page="settings"] .bp-integration-benchmark,
+#lander-full-review [data-page="settings"] .bp-org-benchmark,
+#lander-full-review [data-page="settings"] .bp-security-benchmark {
   display: none !important;
 }
 
@@ -13,5 +25,11 @@
 #lander-full-review [data-page="quotes"] .bp-runtime-benchmark-blocker,
 #lander-full-review > .quote-modal-layer,
 #lander-full-review > .quote-delete-layer {
+  display: none !important;
+}
+
+/* Load boards are integrations. They do not own actions in Orders. */
+#lander-full-review [data-page="orders"] #orderPostLoadBoards,
+#lander-full-review [data-page="orders"] [data-lb-order-post] {
   display: none !important;
 }
