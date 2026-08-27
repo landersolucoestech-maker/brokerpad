@@ -1,47 +1,8 @@
-/* Runtime-only UI states that replace inline styling in generated modules. */
-
-/* Dashboard benchmark strip/cards were explicitly removed from the product.
-   Keep them hidden even during the few milliseconds before the DOM guard prunes
-   any legacy reinjection coming from the immutable benchmark source. */
-#lander-full-review [data-page="dashboard"] .bp-benchmark-zone {
-  display: none !important;
-}
-
-/* Orders benchmark content was explicitly removed from the product, including
-   the Booked → Settled lifecycle strip. The empty sentinel remains only to stop
-   the immutable benchmark retry from recreating that surface. */
-#lander-full-review [data-page="orders"] .bp-order-benchmark {
-  display: none !important;
-}
-
-/* Carrier Onboarding and Private Carrier Network benchmark cards were removed.
-   Hide the entire legacy carrier benchmark zone before the DOM guard converts it
-   into an empty sentinel, preventing flicker and later reinjection. */
-#lander-full-review [data-page="carriers"] .bp-carrier-network-intel {
-  display: none !important;
-}
-
-/* Quotes has one canonical runtime owner. The legacy benchmark surface and
-   legacy CRUD overlays must never become visible while the runtime takes over. */
-#lander-full-review [data-page="quotes"] .bp-quote-benchmark:not(.bp-runtime-benchmark-blocker),
-#lander-full-review > .quote-modal-layer,
-#lander-full-review > .quote-delete-layer {
-  display: none !important;
-}
-
-#lander-full-review [data-page="quotes"] .bp-runtime-benchmark-blocker {
-  display: none !important;
-}
-
-#lander-full-review [data-page="quotes"] .bp-quotes-toolbar {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(160px, 260px);
-  gap: var(--bp-space-2);
-  align-items: center;
-}
+/* Generic runtime-only states shared across owners. Page-specific geometry and
+   product removals live in their dedicated design-system layers. */
 
 #lander-full-review .bp-empty-cell {
-  padding: 18px !important;
+  padding: var(--bp-space-5) !important;
   text-align: center !important;
   color: var(--bp-text-secondary) !important;
 }
@@ -54,7 +15,7 @@
 }
 
 #lander-full-review .bp-local-only-notice {
-  padding: 7px 10px;
+  padding: var(--bp-space-2) var(--bp-space-3);
   border-bottom: 1px solid var(--bp-border);
   background: var(--bp-warning-bg);
   color: var(--bp-warning);
@@ -81,107 +42,50 @@
   background: var(--bp-warning-bg);
   color: var(--bp-warning);
   font-size: var(--bp-text-xs);
+  line-height: var(--bp-leading-normal);
 }
 
-#lander-full-review .bp-settings-tabs {
-  display: flex;
-  align-items: center;
-  gap: var(--bp-space-1);
-  margin-bottom: var(--bp-space-3);
-  padding: var(--bp-space-1);
-  border: 1px solid var(--bp-border);
-  border-radius: var(--bp-radius-sm);
-  background: var(--bp-surface);
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-#lander-full-review .bp-settings-tabs button {
-  min-height: 32px;
-  flex: 0 0 auto;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: var(--bp-radius-sm);
-  background: transparent;
-  color: var(--bp-text-secondary);
-  font-size: var(--bp-text-xs);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-#lander-full-review .bp-settings-tabs button:hover {
-  background: var(--bp-surface-hover);
-}
-
-#lander-full-review .bp-settings-tabs button.active,
-#lander-full-review .bp-settings-tabs button[aria-selected="true"] {
-  border-color: var(--bp-accent);
-  background: var(--bp-accent);
-  color: #fff;
-}
-
-#lander-full-review .bp-settings-panels,
-#lander-full-review .bp-settings-panels > section,
-#lander-full-review .bp-settings-group {
-  min-width: 0;
-  max-width: 100%;
-}
-
-#lander-full-review .bp-settings-section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+/* Canonical loading primitives. Owners may use skeleton or spinner, but the
+   geometry and motion come from one implementation. */
+#lander-full-review .bp-loading,
+#lander-full-review .bp-page-loading {
+  min-height: 160px;
+  display: grid;
+  place-items: center;
   gap: var(--bp-space-3);
-  margin-bottom: var(--bp-space-3);
-}
-
-#lander-full-review .bp-settings-section-head h2,
-#lander-full-review .bp-settings-group h3 {
-  margin: 0;
-}
-
-#lander-full-review .bp-settings-section-head p {
-  margin: var(--bp-space-1) 0 0;
   color: var(--bp-text-secondary);
   font-size: var(--bp-text-sm);
 }
 
-#lander-full-review .bp-settings-group + .bp-settings-group {
-  margin-top: var(--bp-space-4);
+#lander-full-review .bp-spinner {
+  width: var(--bp-control-sm);
+  height: var(--bp-control-sm);
+  border: 3px solid var(--bp-border);
+  border-top-color: var(--bp-accent);
+  border-radius: var(--bp-radius-pill);
+  animation: bp-spin .7s linear infinite;
 }
 
-#lander-full-review .bp-settings-group > h3 {
-  margin-bottom: var(--bp-space-2);
-  color: var(--bp-text-secondary);
-  font-size: var(--bp-text-xs);
-  font-weight: 800;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+#lander-full-review .bp-skeleton {
+  min-height: var(--bp-space-4);
+  border-radius: var(--bp-radius-xs);
+  background: linear-gradient(90deg, var(--bp-surface-muted), var(--bp-surface-hover), var(--bp-surface-muted));
+  background-size: 200% 100%;
+  animation: bp-skeleton 1.2s ease-in-out infinite;
 }
 
-#lander-full-review .bp-settings-group .cardb p {
-  margin: 0 0 var(--bp-space-2);
-  line-height: var(--bp-leading-normal);
+@keyframes bp-spin {
+  to { transform: rotate(360deg); }
 }
 
-@media (max-width: 800px) {
-  #lander-full-review .bp-settings-section-head {
-    flex-direction: column;
-  }
+@keyframes bp-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 
-  #lander-full-review .bp-settings-section-head .btn {
-    width: 100%;
-  }
-
-  #lander-full-review [data-page="settings"] .tablewrap {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    overflow-x: auto !important;
-    overscroll-behavior-x: contain;
-  }
-
-  #lander-full-review [data-page="quotes"] .bp-quotes-toolbar {
-    grid-template-columns: 1fr;
+@media (prefers-reduced-motion: reduce) {
+  #lander-full-review .bp-spinner,
+  #lander-full-review .bp-skeleton {
+    animation: none !important;
   }
 }
