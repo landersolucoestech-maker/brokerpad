@@ -17,11 +17,12 @@ BASELINE_INDEX = 'brokerpad-benchmark-consolidated/index.html'
 JSZIP_CDN = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
 RUNTIME_MODULES = [
     'app.js',
+    'modules/legacy-surface-guard.js',
     'modules/dashboard.js',
-    'modules/dashboard-removals.js',
     'modules/customers.js',
     'modules/leads.js',
     'modules/quotes.js',
+    'modules/quote-calculator.js',
     'modules/orders.js',
     'modules/carriers.js',
     'modules/dispatch.js',
