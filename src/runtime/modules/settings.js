@@ -27,6 +27,11 @@
   const initialIntegrations = [
     { id: 'central-dispatch', name: 'Central Dispatch', category: 'Loadboard', status: 'Needs credentials', accountLabel: '', description: 'Loadboard posting and status synchronization.', updatedAt: '2026-08-26T12:00:00.000Z' },
     { id: 'twilio', name: 'Twilio', category: 'Communications', status: 'Needs credentials', accountLabel: '', description: 'SMS and telephony transport.', updatedAt: '2026-08-26T12:00:00.000Z' },
+    { id: 'whatsapp', name: 'WhatsApp', category: 'Communications', status: 'Needs credentials', accountLabel: '', description: 'Customer messaging channel. Provider credentials and webhooks are required before delivery.', updatedAt: '2026-08-26T12:00:00.000Z' },
+    { id: 'facebook', name: 'Facebook', category: 'Communications', status: 'Needs credentials', accountLabel: '', description: 'Facebook messaging channel. Meta credentials and webhooks are required before delivery.', updatedAt: '2026-08-26T12:00:00.000Z' },
+    { id: 'instagram', name: 'Instagram', category: 'Communications', status: 'Needs credentials', accountLabel: '', description: 'Instagram messaging channel. Meta credentials and webhooks are required before delivery.', updatedAt: '2026-08-26T12:00:00.000Z' },
+    { id: 'tiktok', name: 'TikTok', category: 'Communications', status: 'Needs credentials', accountLabel: '', description: 'TikTok messaging integration metadata. Provider capability must be verified server-side before delivery.', updatedAt: '2026-08-26T12:00:00.000Z' },
+    { id: 'website', name: 'Website Chat', category: 'Communications', status: 'Needs credentials', accountLabel: '', description: 'Website chat transport. A production endpoint and webhook/session backend are required.', updatedAt: '2026-08-26T12:00:00.000Z' },
     { id: 'quickbooks', name: 'QuickBooks', category: 'Accounting', status: 'Needs credentials', accountLabel: '', description: 'Accounting export and reconciliation.', updatedAt: '2026-08-26T12:00:00.000Z' },
   ];
 
@@ -51,15 +56,18 @@
     updatedAt: row.updatedAt || now(),
   });
 
-  const normalizeIntegration = (row) => ({
-    id: String(row.id || uid('INT')).toLowerCase(),
-    name: String(row.name || '').trim(),
-    category: String(row.category || 'Other').trim() || 'Other',
-    status: ['Needs credentials', 'Configured locally', 'Disabled'].includes(row.status) ? row.status : 'Needs credentials',
-    accountLabel: String(row.accountLabel || '').trim(),
-    description: String(row.description || '').trim(),
-    updatedAt: row.updatedAt || now(),
-  });
+  const normalizeIntegration = (row) => {
+    const legacyStatus = row.status === 'Configured locally' ? 'Metadata only' : row.status;
+    return {
+      id: String(row.id || uid('INT')).toLowerCase(),
+      name: String(row.name || '').trim(),
+      category: String(row.category || 'Other').trim() || 'Other',
+      status: ['Needs credentials', 'Metadata only', 'Disabled'].includes(legacyStatus) ? legacyStatus : 'Needs credentials',
+      accountLabel: String(row.accountLabel || '').trim(),
+      description: String(row.description || '').trim(),
+      updatedAt: row.updatedAt || now(),
+    };
+  };
 
   function ensureArray(scope, seed, normalizer) {
     const existing = api.store.get(scope, null);
@@ -74,9 +82,32 @@
     return rows;
   }
 
+  function ensureIntegrations() {
+    const existing = api.store.get(INTEGRATION_SCOPE, null);
+    if (!Array.isArray(existing)) {
+      const rows = initialIntegrations.map(normalizeIntegration);
+      api.store.set(INTEGRATION_SCOPE, rows);
+      api.audit.record('integrations.seed', 'integration', '', { count: rows.length, source: 'settings-runtime' });
+      return rows;
+    }
+    const byId = new Map(existing.map(normalizeIntegration).map((row) => [row.id, row]));
+    let added = 0;
+    initialIntegrations.forEach((seed) => {
+      const normalized = normalizeIntegration(seed);
+      if (!byId.has(normalized.id)) {
+        byId.set(normalized.id, normalized);
+        added += 1;
+      }
+    });
+    const rows = [...byId.values()];
+    api.store.set(INTEGRATION_SCOPE, rows);
+    if (added) api.audit.record('integrations.catalog.migrated', 'integration', '', { added, total: rows.length });
+    return rows;
+  }
+
   let users = ensureArray(USER_SCOPE, initialUsers, normalizeUser);
   let automations = ensureArray(AUTOMATION_SCOPE, initialAutomations, normalizeAutomation);
-  let integrations = ensureArray(INTEGRATION_SCOPE, initialIntegrations, normalizeIntegration);
+  let integrations = ensureIntegrations();
 
   const directory = Object.freeze({
     list() {
@@ -202,9 +233,9 @@
         <form id="bpSettingsIntegrationForm" class="bp-runtime-form">
           <div class="bp-runtime-grid">
             <label class="bp-runtime-span-2"><span>Account label</span><input name="accountLabel" value="${escapeHtml(current.accountLabel)}" placeholder="Non-secret account reference"></label>
-            <label><span>Readiness</span><select name="status"><option ${current.status === 'Needs credentials' ? 'selected' : ''}>Needs credentials</option><option ${current.status === 'Configured locally' ? 'selected' : ''}>Configured locally</option><option ${current.status === 'Disabled' ? 'selected' : ''}>Disabled</option></select></label>
+            <label><span>Readiness</span><select name="status"><option ${current.status === 'Needs credentials' ? 'selected' : ''}>Needs credentials</option><option ${current.status === 'Metadata only' ? 'selected' : ''}>Metadata only</option><option ${current.status === 'Disabled' ? 'selected' : ''}>Disabled</option></select></label>
           </div>
-          <div class="bp-runtime-integrity-warning">Production API keys, passwords and tokens must be stored server-side in a secret manager. This form intentionally stores no secret value.</div>
+          <div class="bp-runtime-integrity-warning">Production API keys, passwords and tokens must be stored server-side in a secret manager. Metadata only does not mean the provider is connected.</div>
           <div class="bp-runtime-modal-foot"><span class="bp-runtime-spacer"></span><button type="button" class="btn" data-settings-close>Cancel</button><button type="submit" class="btn primary">Save Metadata</button></div>
         </form>
       </div>`;
@@ -255,8 +286,8 @@
       const settings = api.settings.get();
       panels.organization.innerHTML = `
         <div class="grid3">
-          <section class="card"><div class="cardh"><h2>Organization</h2></div><div class="cardb"><div class="record"><span>Tenant</span><b>${escapeHtml(api.tenantId)}</b></div><div class="record"><span>Runtime schema</span><b>v${escapeHtml(api.schemaVersion)}</b></div></div></section>
-          <section class="card"><div class="cardh"><h2>Operations</h2></div><div class="cardb"><div class="record"><span>Sales settings</span><b>Runtime-owned</b></div><div class="record"><span>Dispatch settings</span><b>Runtime-owned</b></div></div></section>
+          <section class="card"><div class="cardh"><h2>Organization</h2></div><div class="cardb"><div class="record"><span>Tenant</span><b>${escapeHtml(api.tenantId)}</b></div><div class="record"><span>Schema</span><b>v${escapeHtml(settings.schemaVersion || 1)}</b></div></div></section>
+          <section class="card"><div class="cardh"><h2>Runtime</h2></div><div class="cardb"><div class="record"><span>Version</span><b>${escapeHtml(api.version)}</b></div><div class="record"><span>Mode</span><b>Browser prototype</b></div></div></section>
           <section class="card"><div class="cardh"><h2>Data</h2></div><div class="cardb"><div class="record"><span>Persistence</span><b>Local tenant</b></div><div class="record"><span>Updated</span><b>${escapeHtml(settings.updatedAt || settings.createdAt || '—')}</b></div></div></section>
         </div>`;
     };
@@ -286,7 +317,7 @@
     const renderIntegrations = () => {
       const loadboards = integrations.filter((row) => row.category === 'Loadboard');
       const others = integrations.filter((row) => row.category !== 'Loadboard');
-      const card = (row) => `<section class="card"><div class="cardh"><h2>${escapeHtml(row.name)}</h2><span class="badge ${row.status === 'Configured locally' ? 'amber' : row.status === 'Disabled' ? 'gray' : 'red'}">${escapeHtml(row.status)}</span></div><div class="cardb"><p>${escapeHtml(row.description)}</p><p class="secondary">${row.accountLabel ? `Account: ${escapeHtml(row.accountLabel)}` : 'No account metadata stored.'}</p><button type="button" class="btn" data-settings-integration="${escapeHtml(row.id)}">Configure metadata</button></div></section>`;
+      const card = (row) => `<section class="card"><div class="cardh"><h2>${escapeHtml(row.name)}</h2><span class="badge ${row.status === 'Metadata only' ? 'amber' : row.status === 'Disabled' ? 'gray' : 'red'}">${escapeHtml(row.status)}</span></div><div class="cardb"><p>${escapeHtml(row.description)}</p><p class="secondary">${row.accountLabel ? `Account: ${escapeHtml(row.accountLabel)}` : 'No account metadata stored.'}</p><button type="button" class="btn" data-settings-integration="${escapeHtml(row.id)}">Configure metadata</button></div></section>`;
       panels.integrations.innerHTML = `
         <div class="bp-settings-section-head"><div><h2>Integrations</h2><p>External providers are configured here. Loadboards do not have a standalone BrokerPad module.</p></div></div>
         <div class="bp-settings-group"><h3>Loadboards</h3><div class="grid3">${loadboards.map(card).join('')}</div></div>
