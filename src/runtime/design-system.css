@@ -1,8 +1,12 @@
-/* BrokerPad canonical UI layer. Keep imports in this order. */
+/* BrokerPad canonical UI layer. Import order is intentional: foundations,
+   shared components, workspace layouts, responsive policy, legacy exceptions,
+   generic runtime states, then explicit product decisions. */
 @import url('./design/tokens-shell.css');
 @import url('./design/controls.css');
 @import url('./design/data-components.css');
 @import url('./design/overlays.css');
+@import url('./design/workspaces.css');
 @import url('./design/responsive.css');
 @import url('./design/responsive-hardening.css');
 @import url('./design/runtime-fixes.css');
+@import url('./design/product-decisions.css');
