@@ -64,7 +64,7 @@
       backdrop.classList.remove('is-open');
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Open navigation');
-      document.documentElement.style.removeProperty('overflow');
+      document.documentElement.classList.remove('bp-scroll-locked');
     };
 
     const open = () => {
@@ -72,7 +72,7 @@
       backdrop.classList.add('is-open');
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-label', 'Close navigation');
-      if (matchMedia('(max-width: 800px)').matches) document.documentElement.style.overflow = 'hidden';
+      if (matchMedia('(max-width: 800px)').matches) document.documentElement.classList.add('bp-scroll-locked');
     };
 
     toggle.addEventListener('click', () => sidebar.classList.contains('is-open') ? close() : open());
@@ -142,10 +142,17 @@
     });
 
     $$('button').forEach(accessibleNameFromContext);
+    document.querySelectorAll('.bp-runtime-modal-layer input,.bp-runtime-modal-layer select,.bp-runtime-modal-layer textarea').forEach((control) => {
+      if (control.getAttribute('aria-label') || control.getAttribute('aria-labelledby') || control.closest('label')) return;
+      const placeholder = control.getAttribute('placeholder')?.trim();
+      const name = control.getAttribute('name')?.replace(/[-_]+/g, ' ')?.trim();
+      if (placeholder) control.setAttribute('aria-label', placeholder.replace(/\.{3}$/,'').trim());
+      else if (name) control.setAttribute('aria-label', name);
+    });
   }
 
   function enhanceLiveRegions() {
-    $$('.bp-toast,.ci-toast,.report-toast,.bp-runtime-form-error,.finance-form-error,.carrier-form-error,.orders-modal-error,.bp-contact-policy-notice').forEach((node) => {
+    document.querySelectorAll('.bp-toast,.ci-toast,.report-toast,.bp-runtime-form-error,.finance-form-error,.carrier-form-error,.orders-modal-error,.bp-contact-policy-notice').forEach((node) => {
       if (!node.getAttribute('role')) node.setAttribute('role', 'status');
       node.setAttribute('aria-live', 'polite');
     });
@@ -198,6 +205,18 @@
 
   let trackedModal = null;
   let modalOpener = null;
+
+  function enhanceDialogs() {
+    document.querySelectorAll(modalSelectors).forEach((modal) => {
+      if (!modal.getAttribute('role')) modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      const title = modal.querySelector('h1,h2,h3');
+      if (title) {
+        if (!title.id) title.id = `bp-dialog-title-${Math.random().toString(36).slice(2, 8)}`;
+        if (!modal.getAttribute('aria-labelledby')) modal.setAttribute('aria-labelledby', title.id);
+      }
+    });
+  }
 
   function syncModalFocus() {
     const modal = topModal();
@@ -262,6 +281,7 @@
     enhanceTables();
     enhanceForms();
     enhanceLiveRegions();
+    enhanceDialogs();
     syncModalFocus();
   }
 
@@ -279,13 +299,13 @@
   installModalKeyboardGuard();
   syncDynamicUi();
 
+  // Runtime modal layers live on document.body rather than inside the legacy
+  // application root. Observing body guarantees focus/semantics are normalized
+  // for both canonical runtime modals and legacy overlays.
   const observer = new MutationObserver(scheduleSync);
-  observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['class','hidden','aria-expanded','disabled'] });
+  observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class','hidden','aria-expanded','disabled'] });
 
-  window.addEventListener('brokerpad:runtime:ready', scheduleSync);
-  window.addEventListener('brokerpad:customers:changed', scheduleSync);
-  window.addEventListener('brokerpad:leads:changed', scheduleSync);
-  window.addEventListener('brokerpad:orders:changed', scheduleSync);
-  window.addEventListener('brokerpad:communications:changed', scheduleSync);
-  window.addEventListener('brokerpad:users:changed', scheduleSync);
+  ['runtime:ready','customers:changed','leads:changed','quotes:changed','orders:changed','carriers:changed','documents:changed','communications:changed','finance:changed','users:changed'].forEach((name) => {
+    window.addEventListener(`brokerpad:${name}`, scheduleSync);
+  });
 })();
