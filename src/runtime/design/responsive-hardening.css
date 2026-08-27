@@ -1,33 +1,28 @@
-/* Final responsive hardening for legacy rules with higher specificity.
-   Keep this file last in the canonical design-system import order. */
+/* Final responsive hardening for immutable legacy rules with higher specificity.
+   Keep this file last in the canonical design-system import order. It must only
+   contain exceptions that cannot safely live in the shared responsive layer. */
 
-/* The global topbar must be allowed to shrink even when page-specific actions
-   are injected at runtime (notably Quote Calculator). */
-#lander-full-review .topbar {
+/* Allow the global shell to shrink when page-specific actions are injected. */
+#lander-full-review .topbar,
+#lander-full-review .crumb,
+#lander-full-review .right,
+#lander-full-review .right > * {
   min-width: 0 !important;
-  max-width: 100% !important;
 }
 
 #lander-full-review .crumb {
   flex: 1 1 0 !important;
-  min-width: 0 !important;
 }
 
 #lander-full-review .right {
   flex: 0 1 auto !important;
-  min-width: 0 !important;
-  max-width: calc(100% - 96px) !important;
-}
-
-#lander-full-review .right > * {
-  min-width: 0;
 }
 
 #lander-full-review .bp-top-search {
   min-width: 0 !important;
-  width: clamp(150px, 18vw, 260px) !important;
+  width: min(260px, 22vw) !important;
   max-width: 260px !important;
-  flex: 1 1 200px !important;
+  flex: 1 1 auto !important;
 }
 
 #lander-full-review #qcHeaderSaveDraft,
@@ -37,23 +32,11 @@
   white-space: nowrap;
 }
 
-/* The verified legacy Quotes table already owns its Actions column. The
-   runtime marker can exist during progressive enhancement, but must never
-   contribute a second visual column when the legacy header is already there. */
-#lander-full-review [data-page="quotes"] th[data-bp-quote-actions-head]:last-child:nth-child(9) {
-  display: none !important;
-}
-
 @media (max-width: 1280px) {
   /* Page-level search/filter controls remain available. Hiding the global
-     search here prevents injected Quote Calculator actions from widening the
-     document on common notebook widths. */
+     search prevents page-specific topbar actions from widening notebooks. */
   #lander-full-review .bp-top-search {
     display: none !important;
-  }
-
-  #lander-full-review .right {
-    max-width: calc(100% - 72px) !important;
   }
 }
 
@@ -70,18 +53,9 @@
     max-width: 100% !important;
   }
 
-  /* Late legacy rules use overflow:visible!important on CRM and Quotes table
-     wrappers. On narrow screens that lets their semantic 720/760px tables
-     widen the entire document. The wrapper must own horizontal scrolling. */
-  #lander-full-review [data-page="crm"] .tablewrap {
-    width: auto !important;
-    min-width: 0 !important;
-    max-width: calc(100% - 20px) !important;
-    overflow-x: auto !important;
-    overflow-y: auto !important;
-    overscroll-behavior-x: contain;
-  }
-
+  /* Late immutable rules use overflow:visible!important. The wrapper, not the
+     document, owns horizontal scrolling on narrow screens. */
+  #lander-full-review [data-page="crm"] .tablewrap,
   #lander-full-review [data-page="quotes"] .quotes-tablewrap {
     width: 100% !important;
     min-width: 0 !important;
@@ -100,15 +74,10 @@
     position: relative;
   }
 
-  /* The same actions already exist in the Quote Calculator page header; on
-     tablet/mobile they do not belong in the constrained global topbar. */
+  /* These actions already exist in Quote Calculator itself. */
   #lander-full-review #qcHeaderSaveDraft,
   #lander-full-review #qcHeaderPricing,
   #lander-full-review #qcHeaderCalculate {
     display: none !important;
-  }
-
-  #lander-full-review .right {
-    max-width: calc(100% - 44px) !important;
   }
 }
