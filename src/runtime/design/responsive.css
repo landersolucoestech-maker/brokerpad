@@ -1,4 +1,8 @@
 /* Responsive system: four canonical breakpoints instead of scattered one-offs. */
+html.bp-scroll-locked {
+  overflow: hidden !important;
+}
+
 @media (max-width: 1280px) {
   #lander-full-review .kpis,
   #lander-full-review .reports-kpis,
