@@ -246,56 +246,44 @@
         const participantIds = [...new Set(formData.getAll('participantIds').map((id) => String(id).toUpperCase()))];
         const currentActiveUsers = activeUsers();
         const participants = participantIds.map((id) => currentActiveUsers.find((user) => user.id === id)).filter(Boolean);
-        if (!participantIds.length || participants.length !== participantIds.length) {
-          error.textContent = 'Select one or more active BrokerPad users.';
+        if (!participants.length || participants.length !== participantIds.length) {
+          error.textContent = 'Select one or more active users from Settings → Users & Roles.';
           error.hidden = false;
           return;
         }
-        const name = participants.map((user) => user.name || user.id).join(', ');
-        const initials = participants.slice(0, 2).map((user) => String(user.name || user.id).trim()[0] || '').join('').toUpperCase();
+        const name = participants.length === 1 ? participants[0].name : participants.map((user) => user.name).join(', ');
+        const initials = participants.slice(0, 2).map((user) => (user.name || user.id || '?')[0]).join('').toUpperCase();
         const conversation = normalize({
-          kind: 'team',
-          name,
-          initials,
-          channel: 'internal',
-          status: 'active',
-          assignee: 'me',
-          participantIds,
-          subject: values.subject,
-          messages: body ? [{ kind: 'team', body, author: 'Current User', channel: 'internal', at: now() }] : [],
+          kind: 'team', name, initials, channel: 'internal', status: 'active', assignee: 'me', participantIds,
+          orderId: '', subject: values.subject, messages: body ? [{ kind: 'team', body, author: 'Current User', channel: 'internal', at: now() }] : [],
         });
         onCommit(conversation);
         closeModal();
         return;
       }
 
+      const name = String(values.name || '').trim();
+      const channel = externalChannels.includes(values.channel) ? values.channel : 'website';
       const customerId = String(values.customerId || '').trim().toUpperCase();
       const orderId = String(values.orderId || '').trim().toUpperCase();
-      const name = String(values.name || '').trim();
-      const channel = String(values.channel || 'website');
       if (!name) {
-        error.textContent = 'Conversation name is required.';
+        error.textContent = 'Name is required.';
         error.hidden = false;
         return;
       }
-      if (!externalChannels.includes(channel)) {
-        error.textContent = 'Customer conversations must use an external channel.';
+      if (!linkedRecordExists('customers', customerId)) {
+        error.textContent = `Customer ${customerId} was not found.`;
         error.hidden = false;
         return;
       }
-      if (customerId && !linkedRecordExists('customers', customerId)) {
-        error.textContent = `Customer ${customerId} does not exist.`;
+      if (!linkedRecordExists('orders', orderId)) {
+        error.textContent = `Order ${orderId} was not found.`;
         error.hidden = false;
         return;
       }
-      if (orderId && !linkedRecordExists('orders', orderId)) {
-        error.textContent = `Order ${orderId} does not exist.`;
-        error.hidden = false;
-        return;
-      }
-      const linkedCustomer = customerId ? customerFor({ customerId }) : null;
-      if (body && linkedCustomer?.status === 'Do Not Contact') {
-        error.textContent = `${linkedCustomer.name || customerId} is marked Do Not Contact. Create the conversation without an external first message.`;
+      const customer = customerId ? (api.store.get('customers', []) || []).find((row) => row.id === customerId) : null;
+      if (body && customer?.status === 'Do Not Contact') {
+        error.textContent = `${customer.name || customerId} is marked Do Not Contact. Create the conversation without an external first message or use an internal note.`;
         error.hidden = false;
         api.audit.record('conversation.contact.blocked', 'customer', customerId, { channel, reason: 'do_not_contact_first_message' });
         return;
@@ -333,6 +321,30 @@
     if (!list || !search || !statusFilter || !assigneeFilter || !composer || !sendButton || !messages) return;
 
     statusFilter.innerHTML = '<option value="all">All statuses</option><option value="open">Open</option><option value="pending">Pending</option><option value="active">Active team</option><option value="closed">Closed / archived</option>';
+
+    // The immutable prototype labels its website widget as connected/live. No
+    // production webhook/provider exists yet, so the runtime must never expose
+    // a false connection state.
+    const widget = page.querySelector('.comm-widget-card');
+    if (widget) {
+      const title = widget.querySelector('b');
+      const copy = widget.querySelector('div > span');
+      const status = widget.querySelector('.badge');
+      const configure = widget.querySelector('.comm-widget-btn');
+      if (title) title.textContent = 'Website channel';
+      if (copy) copy.textContent = 'Integration not configured';
+      if (status) {
+        status.textContent = 'Not connected';
+        status.className = 'badge amber';
+      }
+      if (configure) {
+        configure.textContent = 'Configure in Settings';
+        configure.addEventListener('click', () => {
+          document.querySelector('#nav button[data-go="settings"]')?.click();
+          setTimeout(() => document.querySelector('[data-settings-tab="integrations"]')?.click(), 0);
+        });
+      }
+    }
 
     let conversations = ensureSeed();
     let activeId = conversations[0]?.id || '';
