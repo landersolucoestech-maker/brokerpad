@@ -18,14 +18,30 @@ EXPECTED_SOURCE_PAGES = [
     'automations','integrations','users','audit','settings'
 ]
 REQUIRED_TOKENS = [
-    '--bp-font-sans','--bp-text-sm','--bp-space-1','--bp-space-2','--bp-space-3',
-    '--bp-radius-sm','--bp-control-md','--bp-bg','--bp-surface','--bp-text',
-    '--bp-border','--bp-accent','--bp-shadow-md'
+    '--bp-font-sans','--bp-text-sm','--bp-text-metric','--bp-text-page-mobile',
+    '--bp-space-1','--bp-space-2','--bp-space-3','--bp-radius-sm',
+    '--bp-control-md','--bp-avatar-size','--bp-card-head-height','--bp-kpi-min-height',
+    '--bp-table-head-height','--bp-table-row-min-height','--bp-modal-max-width',
+    '--bp-bg','--bp-surface','--bp-text','--bp-text-label','--bp-placeholder',
+    '--bp-border','--bp-border-hover','--bp-accent','--bp-on-accent',
+    '--bp-overlay','--bp-shadow-md'
+]
+REQUIRED_DESIGN_IMPORTS = [
+    "@import url('./design/tokens-shell.css')",
+    "@import url('./design/controls.css')",
+    "@import url('./design/data-components.css')",
+    "@import url('./design/overlays.css')",
+    "@import url('./design/workspaces.css')",
+    "@import url('./design/responsive.css')",
+    "@import url('./design/responsive-hardening.css')",
+    "@import url('./design/runtime-fixes.css')",
+    "@import url('./design/product-decisions.css')",
 ]
 REQUIRED_RUNTIME_MODULES = {
     'audit.js','carriers.js','communications.js','compliance.js','customers.js',
-    'dispatch.js','documents.js','finance.js','integrity.js','leads.js','orders.js',
-    'quotes.js','reports.js','risk.js','sync.js'
+    'dashboard.js','dashboard-removals.js','dispatch.js','documents.js','finance.js',
+    'integrity.js','leads.js','orders.js','quote-calculator.js','quotes.js','reports.js',
+    'risk.js','settings.js','sync.js'
 }
 CANONICAL_BREAKPOINTS = {'1280','1024','800','520'}
 
@@ -78,10 +94,10 @@ def run(root: Path) -> dict:
     index = (root / 'index.html').read_text(encoding='utf-8')
     build_static = (root / 'tools/build_static.py').read_text(encoding='utf-8')
     ds_root = root / 'src/runtime/design-system.css'
-    ds = ds_root.read_text(encoding='utf-8')
+    ds_root_text = ds_root.read_text(encoding='utf-8')
     design_dir = root / 'src/runtime/design'
-    if design_dir.exists():
-        ds += '\n' + '\n'.join(p.read_text(encoding='utf-8') for p in sorted(design_dir.glob('*.css')))
+    design_files = {p.name: p.read_text(encoding='utf-8') for p in sorted(design_dir.glob('*.css'))}
+    ds = ds_root_text + '\n' + '\n'.join(design_files.values())
     ui = (root / 'src/runtime/ui-system.js').read_text(encoding='utf-8')
     app = (root / 'src/runtime/app.js').read_text(encoding='utf-8')
     reports = (root / 'src/runtime/modules/reports.js').read_text(encoding='utf-8')
@@ -104,6 +120,29 @@ def run(root: Path) -> dict:
         if token not in ds:
             errors.append(f'missing design token {token}')
 
+    import_positions = []
+    for required_import in REQUIRED_DESIGN_IMPORTS:
+        pos = ds_root_text.find(required_import)
+        if pos < 0:
+            errors.append(f'missing canonical design layer: {required_import}')
+        import_positions.append(pos)
+    valid_positions = [p for p in import_positions if p >= 0]
+    if valid_positions != sorted(valid_positions):
+        errors.append('canonical design-system import order changed')
+
+    # All maintained component layers must consume tokens rather than introduce
+    # new hardcoded color values. tokens-shell.css is the only color authority.
+    hardcoded_color_files: dict[str, list[str]] = {}
+    color_pattern = re.compile(r'(?<![\w-])(?:#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))')
+    for name, css in design_files.items():
+        if name == 'tokens-shell.css':
+            continue
+        colors = sorted(set(color_pattern.findall(css)))
+        if colors:
+            hardcoded_color_files[name] = colors
+    if hardcoded_color_files:
+        errors.append(f'hardcoded colors outside tokens-shell.css: {hardcoded_color_files}')
+
     if 'src/runtime/design-system.css' not in index:
         errors.append('design-system.css is not loaded by index.html')
     if 'src/runtime/ui-system.js' not in index:
@@ -114,8 +153,6 @@ def run(root: Path) -> dict:
         errors.append('integrity.js is not included in the materialized static build')
     if 'jszip@3.10.1' not in build_static.lower():
         errors.append('materialized static build must load JSZip for Reports XLSX import/export')
-    if "@import url('./design/runtime-fixes.css')" not in ds_root.read_text(encoding='utf-8'):
-        errors.append('runtime-fixes.css must be loaded by the canonical design system')
 
     app_pos = index.find('src/runtime/app.css')
     ds_pos = index.find('src/runtime/design-system.css')
@@ -135,6 +172,10 @@ def run(root: Path) -> dict:
         errors.append('responsive sidebar off-canvas pattern missing')
     if '100vh' not in ds or '100dvh' not in ds:
         errors.append('viewport-fill fallback requires both vh and dvh')
+    if '.bp-loading' not in ds or '.bp-spinner' not in ds or '.bp-skeleton' not in ds:
+        errors.append('canonical loading primitives missing')
+    if '[role="tooltip"]' not in ds or 'details > summary' not in ds:
+        errors.append('tooltip/disclosure component normalization missing')
 
     if 'MutationObserver' not in ui:
         errors.append('dynamic UI normalization observer missing')
@@ -171,7 +212,7 @@ def run(root: Path) -> dict:
     if runtime_prompt_files:
         errors.append(f'runtime modules use browser prompt instead of canonical UI: {runtime_prompt_files}')
     if runtime_inline_style_files:
-        warnings.append(f'runtime modules still contain generated inline style attributes: {runtime_inline_style_files}')
+        errors.append(f'runtime modules contain generated inline style attributes: {runtime_inline_style_files}')
 
     # Reports contract: one dataset row, Import/Export only inside Actions.
     if '<th>Import</th>' in reports or '<th>Export</th>' in reports:
@@ -217,6 +258,7 @@ def run(root: Path) -> dict:
         'runtime_generated_inline_style_files': runtime_inline_style_files,
         'runtime_css_text_files': runtime_css_text_files,
         'runtime_prompt_files': runtime_prompt_files,
+        'hardcoded_color_files': hardcoded_color_files,
         'errors': errors,
         'warnings': warnings,
     }
@@ -237,6 +279,8 @@ def main() -> int:
         print(f"Canonical breakpoints: {result['canonical_breakpoints']}")
         if result['runtime_generated_inline_style_files']:
             print(f"Runtime inline-style files: {result['runtime_generated_inline_style_files']}")
+        if result['hardcoded_color_files']:
+            print(f"Hardcoded design colors: {result['hardcoded_color_files']}")
         for warning in result['warnings']:
             print(f'WARN: {warning}')
         for error in result['errors']:
