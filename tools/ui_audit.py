@@ -39,9 +39,9 @@ REQUIRED_DESIGN_IMPORTS = [
 ]
 REQUIRED_RUNTIME_MODULES = {
     'audit.js','carriers.js','communications.js','compliance.js','customers.js',
-    'dashboard.js','dashboard-removals.js','dispatch.js','documents.js','finance.js',
-    'integrity.js','leads.js','orders.js','quote-calculator.js','quotes.js','reports.js',
-    'risk.js','settings.js','sync.js'
+    'dashboard.js','dispatch.js','documents.js','finance.js','integrity.js',
+    'leads.js','legacy-surface-guard.js','orders.js','quote-calculator.js','quotes.js',
+    'reports.js','risk.js','settings.js','sync.js'
 }
 CANONICAL_BREAKPOINTS = {'1280','1024','800','520'}
 
@@ -101,6 +101,7 @@ def run(root: Path) -> dict:
     ui = (root / 'src/runtime/ui-system.js').read_text(encoding='utf-8')
     app = (root / 'src/runtime/app.js').read_text(encoding='utf-8')
     reports = (root / 'src/runtime/modules/reports.js').read_text(encoding='utf-8')
+    guard = (root / 'src/runtime/modules/legacy-surface-guard.js').read_text(encoding='utf-8')
     baseline = load_baseline(root)
 
     pages = source_pages(baseline)
@@ -130,8 +131,6 @@ def run(root: Path) -> dict:
     if valid_positions != sorted(valid_positions):
         errors.append('canonical design-system import order changed')
 
-    # All maintained component layers must consume tokens rather than introduce
-    # new hardcoded color values. tokens-shell.css is the only color authority.
     hardcoded_color_files: dict[str, list[str]] = {}
     color_pattern = re.compile(r'(?<![\w-])(?:#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))')
     for name, css in design_files.items():
@@ -147,17 +146,41 @@ def run(root: Path) -> dict:
         errors.append('design-system.css is not loaded by index.html')
     if 'src/runtime/ui-system.js' not in index:
         errors.append('ui-system.js is not loaded by index.html')
-    if 'src/runtime/modules/integrity.js' not in index:
-        errors.append('integrity.js is not loaded by the development shell')
-    if "'modules/integrity.js'" not in build_static:
-        errors.append('integrity.js is not included in the materialized static build')
     if 'jszip@3.10.1' not in build_static.lower():
         errors.append('materialized static build must load JSZip for Reports XLSX import/export')
+
+    runtime_dir = root / 'src/runtime/modules'
+    runtime_paths = sorted(runtime_dir.glob('*.js'))
+    runtime_modules = sorted(p.name for p in runtime_paths)
+    missing_runtime = sorted(REQUIRED_RUNTIME_MODULES - set(runtime_modules))
+    if missing_runtime:
+        errors.append(f'required runtime modules missing: {missing_runtime}')
+
+    # Existence is insufficient: every canonical owner must be executed in both
+    # development and materialized builds.
+    for module in sorted(REQUIRED_RUNTIME_MODULES):
+        dev_ref = f'src/runtime/modules/{module}'
+        build_ref = f"'modules/{module}'"
+        if dev_ref not in index:
+            errors.append(f'canonical runtime module is not loaded by index.html: {module}')
+        if build_ref not in build_static:
+            errors.append(f'canonical runtime module is not loaded by static build: {module}')
+
+    if 'dashboard-removals.js' in index or 'dashboard-removals.js' in build_static:
+        errors.append('obsolete dashboard-removals.js loader reference remains; use legacy-surface-guard.js')
 
     app_pos = index.find('src/runtime/app.css')
     ds_pos = index.find('src/runtime/design-system.css')
     if app_pos < 0 or ds_pos < app_pos:
         errors.append('design-system.css must load after app.css')
+
+    guard_pos = index.find('src/runtime/modules/legacy-surface-guard.js')
+    first_owner = min(
+        (index.find(f'src/runtime/modules/{name}') for name in REQUIRED_RUNTIME_MODULES if name != 'legacy-surface-guard.js'),
+        default=-1,
+    )
+    if guard_pos < 0 or (first_owner >= 0 and guard_pos > first_owner):
+        errors.append('legacy-surface-guard.js must initialize before page runtime owners')
 
     last_module = index.rfind('src/runtime/modules/')
     ui_pos = index.find('src/runtime/ui-system.js')
@@ -188,12 +211,18 @@ def run(root: Path) -> dict:
     if 'relations' not in app or 'hasReferences' not in app:
         errors.append('runtime relational integrity API missing')
 
-    runtime_dir = root / 'src/runtime/modules'
-    runtime_paths = sorted(runtime_dir.glob('*.js'))
-    runtime_modules = sorted(p.name for p in runtime_paths)
-    missing_runtime = sorted(REQUIRED_RUNTIME_MODULES - set(runtime_modules))
-    if missing_runtime:
-        errors.append(f'required runtime modules missing: {missing_runtime}')
+    # Legacy surface ownership: benchmark retries may remain in the immutable
+    # source, but maintained UI must neutralize them and keep Loadboards inside
+    # Settings → Integrations rather than Orders.
+    required_guard_markers = [
+        'bp-lead-intel','bp-repeat-intel','bp-pricing-intel','bp-order-benchmark',
+        'bp-carrier-network-intel','bp-comm-benchmark','bp-doc-benchmark',
+        'bp-fin-benchmark','bp-auto-benchmark','bp-integration-benchmark',
+        'bp-org-benchmark','bp-security-benchmark','orderPostLoadBoards','data-lb-order-post'
+    ]
+    for marker in required_guard_markers:
+        if marker not in guard:
+            errors.append(f'legacy surface guard missing ownership marker: {marker}')
 
     runtime_inline_style_files: list[str] = []
     runtime_css_text_files: list[str] = []
@@ -214,7 +243,6 @@ def run(root: Path) -> dict:
     if runtime_inline_style_files:
         errors.append(f'runtime modules contain generated inline style attributes: {runtime_inline_style_files}')
 
-    # Reports contract: one dataset row, Import/Export only inside Actions.
     if '<th>Import</th>' in reports or '<th>Export</th>' in reports:
         errors.append('Reports must not expose separate Import or Export columns')
     if '<th>Dataset</th><th>Records</th><th>Source</th><th>Actions</th>' not in reports:
@@ -239,9 +267,6 @@ def run(root: Path) -> dict:
         warnings.append(f'legacy baseline has {len(legacy_breakpoints)} breakpoints; canonical layer reduces maintained breakpoints to 4')
     if inline_styles:
         warnings.append(f'legacy baseline contains {inline_styles} inline style attributes; retained only inside checksum baseline')
-
-    if not runtime_modules:
-        errors.append('runtime modules missing')
 
     return {
         'status': 'pass' if not errors else 'fail',
