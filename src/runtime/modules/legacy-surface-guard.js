@@ -90,7 +90,15 @@
     const owner = page('finance');
     if (!owner) return;
     ensureSentinel(owner, 'bp-fin-benchmark', 'finance');
+
+    // Product contract: P&L remains aggregate-only. The immutable accounting
+    // enhancer still creates Company / Orders / Customers breakdown surfaces;
+    // remove those surfaces while preserving date/type filters and KPI totals.
+    owner.querySelector('#plSearch')?.remove();
+    owner.querySelector('#plContent')?.remove();
+    owner.querySelector('[data-pl-view]')?.closest('.stripe-card')?.remove();
     owner.dataset.bpFinanceBenchmarkPruned = '1';
+    owner.dataset.bpPlAggregateOnly = '1';
   }
 
   function pruneSettings() {
