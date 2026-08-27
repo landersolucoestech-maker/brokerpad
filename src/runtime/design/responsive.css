@@ -124,7 +124,7 @@
   }
 
   #lander-full-review table {
-    min-width: 720px !important;
+    min-width: var(--bp-table-mobile-min-width) !important;
   }
 
   #lander-full-review .kpis,
@@ -156,12 +156,12 @@
 
   #lander-full-review .notification-dropdown {
     right: -76px !important;
-    width: min(320px, calc(100vw - 24px)) !important;
+    width: min(320px, calc(100vw - var(--bp-space-6))) !important;
   }
 
   #lander-full-review .user-dropdown {
     right: 0 !important;
-    max-width: calc(100vw - 24px);
+    max-width: calc(100vw - var(--bp-space-6));
   }
 
   #lander-full-review .bp-modal-layer,
@@ -173,7 +173,7 @@
   #lander-full-review .stripe-modal-layer,
   #lander-full-review .lb-modal-layer,
   .bp-runtime-modal-layer {
-    padding: 10px !important;
+    padding: var(--bp-space-2) !important;
   }
 
   #lander-full-review .bp-modal,
@@ -187,8 +187,8 @@
   #lander-full-review .lb-modal,
   .bp-runtime-modal {
     width: 100% !important;
-    max-width: calc(100vw - 20px) !important;
-    max-height: calc(100dvh - 20px) !important;
+    max-width: calc(100vw - (var(--bp-space-2) * 2)) !important;
+    max-height: calc(100dvh - (var(--bp-space-2) * 2)) !important;
   }
 }
 
@@ -200,7 +200,7 @@
 
   #lander-full-review h1,
   #lander-full-review .head h1 {
-    font-size: 20px !important;
+    font-size: var(--bp-text-page-mobile) !important;
   }
 
   #lander-full-review .kpis,
@@ -223,7 +223,7 @@
 
   #lander-full-review .btn,
   #lander-full-review .topbtn {
-    min-height: 36px !important;
+    min-height: var(--bp-nav-item-height) !important;
   }
 
   #lander-full-review .bp-toast,
