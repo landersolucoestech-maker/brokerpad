@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('dashboard permanently removes legacy benchmark KPIs and cards', async ({ page }) => {
+test('dashboard permanently neutralizes legacy benchmark KPIs and cards', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#lander-full-review')).toBeVisible();
@@ -30,17 +30,21 @@ test('dashboard permanently removes legacy benchmark KPIs and cards', async ({ p
   for (const label of removedLabels) {
     await expect(dashboard, `removed Dashboard block must stay absent: ${label}`).not.toContainText(label);
   }
-  await expect(dashboard.locator('.bp-benchmark-zone')).toHaveCount(0);
 
-  // Simulate a late legacy reinjection. The guard must remove the entire zone again.
-  await dashboard.evaluate((node) => {
-    const legacy = document.createElement('div');
-    legacy.className = 'bp-benchmark-zone';
-    legacy.innerHTML = '<div class="bp-metrics"><div class="bp-metric"><small>Lead response</small></div></div><section class="bp-card"><h3>My Work</h3></section>';
-    node.appendChild(legacy);
+  const sentinel = dashboard.locator('.bp-benchmark-zone.bp-runtime-legacy-sentinel');
+  await expect(sentinel).toHaveCount(1);
+  await expect(sentinel).toBeHidden();
+  await expect.poll(() => sentinel.evaluate((node) => node.childNodes.length)).toBe(0);
+
+  // Simulate a late legacy reinjection inside the sentinel. The guard must empty
+  // it again without deleting the marker that blocks the immutable retry.
+  await sentinel.evaluate((node) => {
+    node.hidden = false;
+    node.innerHTML = '<div class="bp-metrics"><div class="bp-metric"><small>Lead response</small></div></div><section class="bp-card"><h3>My Work</h3></section>';
   });
 
-  await expect.poll(() => dashboard.locator('.bp-benchmark-zone').count()).toBe(0);
+  await expect.poll(() => sentinel.evaluate((node) => node.childNodes.length)).toBe(0);
+  await expect(sentinel).toBeHidden();
   await expect(dashboard).not.toContainText('Lead response');
   await expect(dashboard).not.toContainText('My Work');
 });
