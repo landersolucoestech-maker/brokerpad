@@ -33,3 +33,11 @@
 #lander-full-review [data-page="orders"] [data-lb-order-post] {
   display: none !important;
 }
+
+/* Accounting P&L is aggregate-only. Legacy Company / Order / Customer
+   breakdown controls and content are intentionally excluded. */
+#lander-full-review [data-page="finance"] #plSearch,
+#lander-full-review [data-page="finance"] #plContent,
+#lander-full-review [data-page="finance"] .stripe-card:has([data-pl-view]) {
+  display: none !important;
+}
